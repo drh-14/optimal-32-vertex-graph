@@ -1,11 +1,12 @@
-#include "gendef.h";
-
+// Read the comment on the bottom function first to better understand what variables mean. It will def!!! Help
+#include "gendef.h"
+#include "functions.h"
 
 static SCHAR n,k,t,mid_max,splitlevel;
-static ULONG tostore,toprint,count;
+static ULONG to_store,to_print,count;
 static FILE  *ergfile,*lstfile,*autfile;
 static UINT  jobs,jobnr;
-static SCHAR storeall,printall;
+static SCHAR store_all,print_all;
 
 static SCHAR springen,i1,j1,f0,f1,girth_exact;
 static SCHAR **g,**l,**part,**einsen,**transp,**zbk;
@@ -15,96 +16,99 @@ static ULONG calls,dez,anz;
 static long fpos;
 
 /*
- with max test at mid_max
- WARNING: vm changed: vm = n + 1 if grad[n] >= 1
+ with Maxtest at mid_max
+ WARNING: "vm" has been modified: vm = n + 1 if grad[n] >= 1
 
- Last change: instead of if(vm <= n && ...) vm++, now if(vm <= my) vm = my + 1
+ last change:
+ instead of if(vm <= n && ...) vm++ now if(vm <= my) vm = my + 1
 
- Splitting the generation into multiple steps is now possible 
+ Splitting the generation into multiple steps
+ is now possible
 
  Shortcode implemented
 */
 
-#ifdef STAB
+
+#ifdef STAB  
 static SCHAR **aut;
 static int  erz,merz;
 
-static void stabprint()
-{
- int i,j;
- long ord=1;
- SCHAR next,last=0,mult=1;
+// The function prints each 2D array of automorphism and its order.
+static void stabprint(){
+	int i,j;
+	long ord=1; // Stands for order
+	SCHAR next,last=0,mult=1;
 
- for(i=1;i<=erz;i++)
-    {
-     next=aut[i][0];
-     if(last==next)
-	mult++;
-     else
-       {
-	last=next;
-	ord*=mult;
-	mult=2;
-       }
-     fprintf(autfile,"\n%d :",next);
-     for(j=1;j<=n;j++)
-	fprintf(autfile," %d",aut[i][j]);
-    }
- fprintf(autfile,"\nOrdnung: %ld\n\n",ord*mult);
+	for(i=1;i<=erz;i++)
+		{
+		next=aut[i][0];
+		if(last==next)
+		mult++;
+		else
+		{
+		last=next;
+		ord*=mult;
+		mult=2;
+		}
+		fprintf(autfile,"\n%d :",next);
+		for(j=1;j<=n;j++)
+		fprintf(autfile," %d",aut[i][j]);
+		}
+	fprintf(autfile,"\nOrder: %ld\n\n",ord*mult);
 }
 #endif
 
-static void err()
-{
- fprintf(stderr,"Abort Error: Memory Full");
- exit(0);
+// Outputs an error message and aborts the program if memory is full.
+static void err(){
+	fprintf(stderr, "Abort error: Memory full");
+	exit(0);
 }
 
-static void neighborList()
-{
- SCHAR i,j;
- for(i=1;i<=n;i++)
-    {
-     fprintf(autfile,"\n%d : ",i);
-     for(j=1;j<=grad[i];j++)
-	 fprintf(autfile,"%d ",l[i][j]);
-    }
- fprintf(autfile,"\n");
+// This function prints the list of neighboring nodes for each node in the graph
+static void neighbor_list(){
+	SCHAR i,j;
+	for(i=1;i<=n;i++)
+		{
+		fprintf(autfile,"\n%d : ",i);
+		for(j=1;j<=grad[i];j++)
+		fprintf(autfile,"%d ",l[i][j]);
+		}
+	fprintf(autfile,"\n");
 }
 
 /*
- (f0)f1 is the smallest node for which, based on the girth and the degree (k),
-  an edge is predefined
+ (f0)f1 is the smallest node for which,
+ based on the girth and the degree, an
+ edge is (not) predetermined.
 
- Example:  k=3,t=3 -> f1=2,f0=5
-	k=3,t=5 -> f1=5,f0=11
+ Example: k=3, t=3 -> f1=2, f0=5
+          k=3, t=5 -> f1=5, f0=11
 */
+
 
 #ifndef SHORTCODE
 
-static void komprtofile()
-{
- SCHAR i,j,c;
- SCHAR *store;
- store=g[0];
+static void compressToFile(){
+	SCHAR i,j,c;
+	SCHAR *store;
+	store=g[0];
 
- for(i=f1;i<f0;i++)
-     store[i]=2;
- for(i=f0;i<=n;i++)
-     store[i]=1;
+	for(i=f1;i<f0;i++)
+		store[i]=2;
+	for(i=f0;i<=n;i++)
+		store[i]=1;
 
- for(i=f1;i<=n;i++)
-     for(j=store[i];j<=k;j++)
-	{
-	 c=l[i][j];
-	 store[c]++;
-	 putc(c,lstfile);
-	}
+	for(i=f1;i<=n;i++)
+		for(j=store[i];j<=k;j++)
+		{
+		c=l[i][j];
+		store[c]++;
+		putc(c,lstfile);
+		}
 }
 
 #else
-
-static void komprtofile()
+static void compressToFile()
 {
  SCHAR i,j,c,equ=1;
  UINT  h=0;
@@ -118,9 +122,9 @@ static void komprtofile()
 	    if(equ&&c!=lastcode[++h])
 	      {
 	       equ=0;
-	       putc(h-1,lstfile);  /*Anzahl der uebereinstimmenden Kanten*/
+	       putc(h-1,lstfile);  /* Number of matching edges */
 	       lastcode[h]=c;
-	       putc(c,lstfile);   /*nur fuer n<256*/
+	       putc(c,lstfile);   /* Only for n < 256 */
 	      }
 	    else
 	    if(!equ)
@@ -131,20 +135,19 @@ static void komprtofile()
 	   }
 	}
 }
-
 #endif
 
 
-/*
- girthstart ermittelt Taillenweite
- und gibt diese zur�ck bzw 0,
- falls Knoten 3 nicht auf dem
- (ersten Taillenkreis liegt
- wird nur aufgerufen, wenn
- 1.Kreis soeben geschlossen wurde
-*/
 
-static SCHAR girthstart()
+/*
+ girthStart determines the girth
+ and returns it or 0 if
+ node 3 does not lie on the
+ (first girth circle).
+ It is only called when
+ the first cycle has just been closed.
+*/
+static SCHAR girthStart()  // girth refers to the length of the shortest cycle in a graph
 {
  SCHAR tw=2,last=1,now=2,next;
 
@@ -161,14 +164,13 @@ static SCHAR girthstart()
 }
 
 /*
- girthcheck2 testet,ob sich die
- Taillenweite nach Einf�gen
- von Kante(mx,my) verkleinert,
- wenn ja wird weue tw zur�ckgegeben
- (d.h. G nicht max), sonst 127
+ girthCheck2 tests whether the
+ girth is reduced after inserting
+ the edge (mx, my). If yes, the new
+ girth is returned (i.e., G is not max),
+ otherwise, 127 is returned.
 */
-
-static SCHAR girthcheck2(mx,my,tw)
+static SCHAR girthCheck2(mx,my,tw)
 SCHAR mx,my,tw;
 {
  SCHAR *status,*xnachb,*ynachb;
@@ -240,11 +242,10 @@ SCHAR mx,my,tw;
 }
 
 /*
- ongirth0 prueft fuer gerade Taillenweite tw,
- ob Knoten v auf einem Taillenkreis liegt.
- Wenn ja, wird 1 zurueckgegben, sonst 0.
+ ongirth0 checks for odd girth `tw` 
+ whether node `v` lies on a girth circle. 
+ If so, 1 is returned; otherwise, 0.
 */
-
 static SCHAR ongirth0(v,tw)
 SCHAR v,tw;
 {
@@ -305,12 +306,8 @@ SCHAR v,tw;
  return(0);
 }
 
-/*
- ongirth0 prueft fuer ungerade Taillenweite tw,
- ob Knoten v auf einem Taillenkreis liegt.
- Wenn ja, wird 1 zurueckgegben, sonst 0.
-*/
 
+// Also checks if node v is part of a cycle of girth tw
 static SCHAR ongirth1(v,tw)
 SCHAR v,tw;
 {
@@ -358,7 +355,8 @@ SCHAR v,tw;
  return(0);
 }
 
-static SCHAR knoten_als_eins(v,tw)
+// Determines if a specific node v participates in a cycle of girth tw.
+static SCHAR isNodeInCycle(v,tw)
 SCHAR v,tw;
 {
  SCHAR i,j,x;
@@ -367,7 +365,7 @@ SCHAR v,tw;
     for(i=1;i<=k;i++)
        {
 	x=l[v][i];
-	for(j= i + 1;j <= k; j++)
+	for(j=i+1;j<=k;j++)
 	    if(g[x][l[v][j]])
 	       return(1);
        }
@@ -380,7 +378,8 @@ SCHAR v,tw;
     return(ongirth1(v,tw));
 }
 
-static void sprungindex(i,j)
+// Finds and updates the maximum edge pair based on conditions specified in the loops.
+static void findMaxEdgePair(i,j)
 SCHAR i,j;
 {
  SCHAR r,s,x,y,z,e;
@@ -408,6 +407,7 @@ SCHAR i,j;
    {i1=x;j1=y;}
 }
 
+// Reverses the permutation of nodes, modifying the kmn array.
 static void transpinv(mperm)
 SCHAR *mperm;
 {
@@ -423,6 +423,7 @@ SCHAR *mperm;
       }
 }
 
+// Finds maximum values in a block of a given row, updating permutations.
 static SCHAR maxinblock(zeile,mperm,e,li,re)
 SCHAR *zeile,*mperm;
 SCHAR e,li,re;
@@ -453,6 +454,7 @@ SCHAR e,li,re;
  return(e);
 }
 
+// Handles maximum values in a specific row, details are cut off in the provided code snippet.
 static SCHAR maxinzeile(tz)
 SCHAR tz;
 {
@@ -474,11 +476,14 @@ SCHAR tz;
     return(0);
  else
  if(erg>0)
-    return(1);   /*urspr. Nummerierung groesser*/
- sprungindex(tz,li+e);
+    return(1);   
+ findMaxEdgePair(tz,li+e);
  return(-1);
 }
 
+/*
+maxrekneu recursively explores permutations of node configurations, looking for an optimal arrangement based on the criteria defined in maxinzeile. This is a recursive backtracking function, leveraging swaps and recursive calls to systematically explore and record configurations that meet its conditions.
+*/
 static SCHAR maxrekneu(tz)
 SCHAR tz;
 {
@@ -519,412 +524,484 @@ SCHAR tz;
  return(erg);
 }
 
-static SCHAR maxstartneu(tw)
-SCHAR tw;
-{
- SCHAR i,j,e;
- SCHAR erg;
+static SCHAR start_max_search(SCHAR tw) {
+    SCHAR i, j, e;
+    SCHAR erg;
+
 #ifdef STAB
- erz=0;
+    erz = 0; // Reset 'erz' counter if STAB is defined
 #endif
- for(i=n-1;i>1;i--)             /*durchlauft die punktw. Stabilisatoren*/
-    {                           /*Stab(n-2),...,Stab(0)=S(n)*/
-     e=part[0][i];
-     for(j=i+1;j<=e;j++)
-	{
-	 kmn[i]=j;
-	 kmn[j]=i;              /*Transposition (i,j)*/
-	 erg=maxinzeile(i);
-	 if(erg==0)
-	    erg=maxrekneu(i+1); /*durchlaeuft Nebenklasse (i,j)Stab{0,...,i}*/
+
+    // Loop through stabilizing transformations for points
+    for (i = n - 1; i > 1; i--) {
+        // Stabilizers: Stab(n-2), ..., Stab(0) = S(n)
+        e = part[0][i];
+        for (j = i + 1; j <= e; j++) {
+            kmn[i] = j;
+            kmn[j] = i; // Swap elements (transposition (i, j))
+            
+            erg = maxinzeile(i); // Check if this row's configuration is optimal
+            
+            if (erg == 0) {
+                erg = maxrekneu(i + 1); // Traverse subclass (i, j)Stab{0,...,i}
+            }
+
 #ifdef STAB
-	 if(erg==0)
-	    aut[erz][0]=i;
+            if (erg == 0) {
+                aut[erz][0] = i; // If erg == 0, store index i in aut array
+            }
 #endif
-	 transpinv(transp[i]);
-	 kmn[i]=i;
-	 kmn[j]=j;
-	 if(erg==-1)
-	    return(0);
-	}
+
+            transpinv(transp[i]); // Reverse the transformation on transp[i]
+            kmn[i] = i; // Restore original state for kmn[i]
+            kmn[j] = j; // Restore original state for kmn[j]
+
+            if (erg == -1) {
+                return 0; // Early exit if erg indicates a stopping condition
+            }
+        }
     }
 
- for(j=2;j<=n;j++)              /*durchlauft die Nebenklassen von Stab(1)*/
-   if(knoten_als_eins(j,tw))
-	{
-	 kmn[1]=j;
-	 kmn[j]=1;              /*Transposition (i,j)*/
-	 erg=maxinzeile(1);
-	 if(erg==0)
-	    erg=maxrekneu(2);   /*durchlaeuft Nebenklasse (i,j)Stab{0,...,i}*/
+    // Loop through subclasses of stabilizer Stab(1)
+    for (j = 2; j <= n; j++) {
+        if (isNodeInCycle(j, tw)) { // Check if node j is in the cycle
+            kmn[1] = j;
+            kmn[j] = 1; // Swap elements (transposition (1, j))
+
+            erg = maxinzeile(1); // Check if this row's configuration is optimal
+
+            if (erg == 0) {
+                erg = maxrekneu(2); // Traverse subclass (1, j)Stab{0,...,1}
+            }
+
 #ifdef STAB
-	 if(erg==0)
-	    aut[erz][0]=i;
+            if (erg == 0) {
+                aut[erz][0] = 1; // Store 1 in aut array if erg is 0
+            }
 #endif
-	 transpinv(transp[1]);
-	 kmn[1]=1;
-	 kmn[j]=j;
-	 if(erg==-1)
-	    return(0);
-	}
 
- return(1);
-}
+            transpinv(transp[1]); // Reverse the transformation on transp[1]
+            kmn[1] = 1; // Restore original state for kmn[1]
+            kmn[j] = j; // Restore original state for kmn[j]
 
-static SCHAR maxinzeile1(tz)
-SCHAR tz;
-{
- SCHAR e,li,re,erg=0;
- SCHAR b,*zeile,*block,*eintr,*mperm;
- zeile=g[kmn[tz]];
- block=part[tz];
- eintr=einsen[tz];
- mperm=transp[tz];
- mperm[0]=0;
- for(b=1;b<=block[0]&&erg==0;b++)
-    {
-     e=eintr[b];
-     li=block[b];re=block[b+1]-1;
-     erg=maxinblock(zeile,mperm,e,li,re);
-    }
- if(erg==0)
-    return(0);
- else
- if(erg>0)
-    return(1);
- return(-1);
-}
-
-static SCHAR maxrekneu1(tz)
-SCHAR tz;
-{
- SCHAR i,x,e;
- SCHAR erg;
- if(tz==n-1)
-    return(0);
- /*x=kmn[tz];*/
- erg=maxinzeile1(tz);
- if(erg==0)
-    erg=maxrekneu1(tz+1);
- transpinv(transp[tz]);
- e=part[0][tz];
- for(i=tz+1;i<=e&&erg==1;i++)
-    {
-     x=kmn[tz];
-     kmn[tz]=kmn[i];
-     kmn[i]=x;
-     erg=maxinzeile1(tz);
-     if(erg==0)
-	erg=maxrekneu1(tz+1);
-     transpinv(transp[tz]);
-     x=kmn[tz];
-     kmn[tz]=kmn[i];
-     kmn[i]=x;
-    }
- return(erg);
-}
-
-static SCHAR maxstartneu1(vm)
-SCHAR vm;
-{
- SCHAR i,j,e;
- SCHAR erg;
- for(i=vm;i>1;i--)
-    {
-     e=part[0][i];
-     for(j=i+1;j<=e;j++)
-	{
-	 kmn[i]=j;
-	 kmn[j]=i;
-	 erg=maxinzeile1(i);
-	 if(erg==0&&i<n-1)
-	    erg=maxrekneu1(i+1);
-	 transpinv(transp[i]);
-	 kmn[i]=i;
-	 kmn[j]=j;
-	 if(erg==-1)
-	    return(0);
-	}
+            if (erg == -1) {
+                return 0; // Early exit if erg indicates a stopping condition
+            }
+        }
     }
 
- for(j=2;j<=vm;j++)
-     if(grad[j]==k)
-       {
-	kmn[1]=j;
-	kmn[j]=1;
-	erg=maxinzeile1(1);
-	if(erg==0)
-	   erg=maxrekneu1(2);
-	transpinv(transp[1]);
-	kmn[1]=1;
-	kmn[j]=j;
-	if(erg==-1)
-	   return(0);
-       }
-
- return(1);
+    return 1; // Return 1 if all configurations were processed successfully
 }
+
+
+static SCHAR check_max_in_row(SCHAR tz) {
+    SCHAR e, li, re, erg = 0;
+    SCHAR b, *zeile, *block, *eintr, *mperm;
+
+    // Initialize pointers to arrays
+    zeile = g[kmn[tz]];   // Row data for the current configuration of tz
+    block = part[tz];     // Block partition information for tz
+    eintr = einsen[tz];   // Entry information for tz
+    mperm = transp[tz];   // Permutation data for tz
+
+    mperm[0] = 0;  // Reset the permutation index
+    
+    // Loop through each block in the partition
+    for (b = 1; b <= block[0] && erg == 0; b++) {
+        e = eintr[b];           // Get entry index in einsen for block b
+        li = block[b];          // Start index of the current block
+        re = block[b + 1] - 1;  // End index of the current block
+        
+        // Check for maximum configuration within the block
+        erg = maxinblock(zeile, mperm, e, li, re); 
+
+        // maxinblock returns a value indicating the optimality of the block,
+        // and we stop early if an optimal configuration is found.
+    }
+
+    // Determine final return value based on erg
+    if (erg == 0)
+        return 0;        // No valid configuration found in any block
+    else if (erg > 0)
+        return 1;        // Valid configuration found in at least one block
+    
+    return -1;           // Indicates an error or unhandled case
+}
+
+
+static SCHAR find_max_recursively(SCHAR tz) {
+    SCHAR i, x, e;
+    SCHAR erg;
+
+    // Base case: if tz has reached the last index, return 0 as no further recursion is needed
+    if (tz == n - 1)
+        return 0;
+
+    // Evaluate the current row configuration using maxinzeile1
+    erg = maxinzeile1(tz);
+
+    // If no valid configuration is found, continue recursively with the next index (tz + 1)
+    if (erg == 0)
+        erg = find_max_recursively(tz + 1);
+
+    // Invert the transformation on the current index
+    transpinv(transp[tz]);
+
+    // Get the limit of possible elements for swapping, defined by `part[0][tz]`
+    e = part[0][tz];
+
+    // Loop over possible swaps for elements from tz+1 up to e
+    for (i = tz + 1; i <= e && erg == 1; i++) {
+        // Swap elements at tz and i
+        x = kmn[tz];
+        kmn[tz] = kmn[i];
+        kmn[i] = x;
+
+        // Re-evaluate the row after the swap
+        erg = maxinzeile1(tz);
+
+        // If no valid configuration found, continue recursion with next index (tz + 1)
+        if (erg == 0)
+            erg = find_max_recursively(tz + 1);
+
+        // Undo the transformation after recursion to reset the state
+        transpinv(transp[tz]);
+
+        // Swap elements back to restore original configuration
+        x = kmn[tz];
+        kmn[tz] = kmn[i];
+        kmn[i] = x;
+    }
+
+    // Return the result of the recursive search
+    return erg;
+}
+
+
+static SCHAR start_max_search(SCHAR vm) {
+    SCHAR i, j, e;
+    SCHAR erg;
+
+    // Loop through elements from `vm` down to 2
+    for (i = vm; i > 1; i--) {
+        // Set the upper limit of elements for swapping
+        e = part[0][i];
+
+        // Loop over potential swaps from `i+1` to `e`
+        for (j = i + 1; j <= e; j++) {
+            // Swap elements at i and j
+            kmn[i] = j;
+            kmn[j] = i;
+
+            // Evaluate the row configuration at `i` using maxinzeile1
+            erg = maxinzeile1(i);
+
+            // If no valid configuration found, try recursively at the next index
+            if (erg == 0 && i < n - 1)
+                erg = maxrekneu1(i + 1);
+
+            // Reverse the transformation at `i`
+            transpinv(transp[i]);
+
+            // Reset elements after recursion
+            kmn[i] = i;
+            kmn[j] = j;
+
+            // If an invalid state is detected, return 0
+            if (erg == -1)
+                return 0;
+        }
+    }
+
+    // Check configurations for elements from 2 to `vm`
+    for (j = 2; j <= vm; j++)
+        if (grad[j] == k) {  // Check if element `j` matches a given condition (e.g., has degree `k`)
+            kmn[1] = j;
+            kmn[j] = 1;
+
+            // Evaluate the row configuration at index 1
+            erg = maxinzeile1(1);
+
+            // If no valid configuration found, check recursively from index 2
+            if (erg == 0)
+                erg = maxrekneu1(2);
+
+            // Reverse transformation for `transp[1]`
+            transpinv(transp[1]);
+
+            // Reset elements after recursion
+            kmn[1] = 1;
+            kmn[j] = j;
+
+            // If an invalid state is detected, return 0
+            if (erg == -1)
+                return 0;
+        }
+
+    // If no errors encountered, return 1 indicating successful search completion
+    return 1;
+}
+
 
 /*
- semiverf erstellt part[x+1],
- die Verfeinerung von part[x]
- aufgrund der Eintraege in Zeile x.
- semiverf  wird erst aufgerufen,
- wenn Zeile x gefuellt ist.
+ semiverf creates part[x+1],
+ the refinement of part[x]
+ based on the entries in line x.
+ semiverf is only called
+ if line x is filled.
 */
+static void initialize_next_partition(SCHAR x) {
+    SCHAR *nextpart, *block, blanz, blockgr, einsanz, i;
 
-static void semiverf(x)
-SCHAR x;
-{
- SCHAR *nextpart,*block,blanz,blockgr,einsanz,i;
- block=part[x];
- blanz=block[0];
- nextpart=part[x+1];
- einsanz=einsen[x][1];
- blockgr=block[2]-block[1];
+    // Set pointers to the current block and the next partition
+    block = part[x];
+    blanz = block[0];                 // Number of blocks in `part[x]`
+    nextpart = part[x + 1];           // Prepare next partition block
+    einsanz = einsen[x][1];           // Number of special elements (e.g., "ones") in the first sub-block
+    blockgr = block[2] - block[1];    // Size of the first sub-block in the partition
 
- if(blockgr==1)
-   {
-    nextpart[0]=0;
-    part[0][x+1]=x+1;
-   }
- else
- if(einsanz==1)
-   {
-    nextpart[1]=x+2;                                   /*blockgr-1;*/
-    nextpart[0]=1;
-    part[0][x+1]=x+1;
-   }
- else
- if(einsanz==blockgr||einsanz==0)
-   {
-    nextpart[1]=x+2;                                   /*blockgr-1;*/
-    nextpart[0]=1;
-    part[0][x+1]=x+blockgr;
-   }
- else
-   {
-    nextpart[1]=x+2;                                   /*einsanz-1;*/
-    nextpart[2]=x+einsanz+1;                           /*blockgr-1;*/
-    nextpart[0]=2;
-    part[0][x+1]=x+einsanz;
-   }
-
- for(i=2;i<=blanz;i++)
-    {
-     einsanz=einsen[x][i];
-     blockgr=block[i+1]-block[i];
-     if(einsanz==blockgr||einsanz==0)
-	nextpart[++nextpart[0]]=block[i];              /*blockgr;*/
-     else
-       {
-	nextpart[++nextpart[0]]=block[i];              /*einsanz;*/
-	nextpart[++nextpart[0]]=block[i]+einsanz;      /*blockgr-einsanz;*/
-       }
+    // Set up next partition based on special cases for block sizes
+    if (blockgr == 1) {
+        nextpart[0] = 0;                 // Empty the next partition
+        part[0][x + 1] = x + 1;          // Set next partition start index
+    } 
+    else if (einsanz == 1) {
+        nextpart[1] = x + 2;             // Mark the next sub-block start
+        nextpart[0] = 1;                 // Set size for next partition
+        part[0][x + 1] = x + 1;          // Mark the end of the next block
+    } 
+    else if (einsanz == blockgr || einsanz == 0) {
+        nextpart[1] = x + 2;
+        nextpart[0] = 1;
+        part[0][x + 1] = x + blockgr;    // Expand to include the full block
+    } 
+    else {
+        nextpart[1] = x + 2;                 // Start of first sub-block in next partition
+        nextpart[2] = x + einsanz + 1;       // Start of second sub-block in next partition
+        nextpart[0] = 2;                     // Two sub-blocks in the partition
+        part[0][x + 1] = x + einsanz;        // Mark end of first sub-block
     }
- nextpart[nextpart[0]+1]=n+1;
+
+    // Loop through remaining blocks in the partition
+    for (i = 2; i <= blanz; i++) {
+        einsanz = einsen[x][i];                   // Number of special elements in the current block
+        blockgr = block[i + 1] - block[i];        // Calculate the current block size
+
+        if (einsanz == blockgr || einsanz == 0) {
+            nextpart[++nextpart[0]] = block[i];   // Single block added
+        } 
+        else {
+            nextpart[++nextpart[0]] = block[i];             // Start of sub-block with special elements
+            nextpart[++nextpart[0]] = block[i] + einsanz;   // Split the block by special elements
+        }
+    }
+
+    nextpart[nextpart[0] + 1] = n + 1;  // Set the final marker for partition end
 }
 
+
+
 /*
- ordrek erledigt das Einsetzen
- der Kanten, ruft ggf Girth-
- und Maxtest auf, steuert die
- Ausgabe. Uebergabeparameter:
- (mx,my) zuletzt einges. Kante
- vm min. Knoten mit grad=0
- vor Einsetzen von (mx,my)
- tw Taillenweite vor Einsetzen
- von (mx,my). tw=0, falls noch
- kein Kreis existiert
- lblock Block von part[mx], wo
- eingesetzt wurde
+ ordrek does the insertion
+ the edges, if necessary calls Girth-
+ and Maxtest on, controls it
+ Output. Transfer parameters:
+ (mx,my) last entered. Edge
+ vm min. nodes with grad=0
+ before inserting (mx,my)
+ tw waist size before insertion
+ from (mx,my). tw=0, if still
+ no circle exists
+ lblock Block of part[mx], where
+ was used
 */
+static void ordrek(SCHAR mx, SCHAR my, SCHAR vm, SCHAR tw, SCHAR lblock) {
+    SCHAR i;
 
-static void ordrek(mx,my,vm,tw,lblock)
-SCHAR mx,my,vm,tw,lblock;
-{
- SCHAR i;
+    // Checks if there's enough space to add an edge from node `mx` to achieve the required degree.
+    if (my > n - k && grad[mx] < k && n - my < k - grad[mx])   
+        return;
 
- if(my>n-k&&grad[mx]<k&&n-my<k-grad[mx])   /*noch genug Platz in Zeile mx,damit grad(mx)=k?*/
-    return;				   /*nicht besonders effektiv*/
+    // Checks for space in the row if `mx` is close to reaching the max degree `k`.
+    if (mx >= n - k && grad[mx] == k) {
+        for (i = my + 1; i <= n; i++) {
+            if (n - mx - 1 < k - grad[i]) 
+                return;
+        }
+    }
 
- if(mx>=n-k&&grad[mx]==k)
-    for(i=my+1;i<=n;i++)                   /*testet,ob in Spalte i noch genug Platz*/
-	if(n-mx-1<k-grad[i])               /*damit grad(i)=k werden kann (**)*/
-	   return;
+    // `my < vm` indicates the need to check for new cycles in the graph.
+    if (my < vm) {
+        // Checks girth conditions
+        if (tw > 3) {
+            if (girthcheck2(mx, my, tw) < tw)
+                return;
+        } else if (tw == 0) {  // First cycle detection
+            tw = girthstart();  
+            if (tw == 0)
+                return;
+        }
+    }
 
- if(my<vm)                                 /*my<vm notw. fuer neue Kreise*/
-   {
-    if(tw>3)                               /*falls Taillenweite >3, testen,*/
-      {					   /*ob sie nach einf�gen von (mx,my)*/
-       if(girthcheck2(mx,my,tw)<tw)     /*gleich geblieben ist,*/
-	  return;                          /*wenn nein abbrechen*/
-      }
-    else
-    if(tw==0)                              /*dies ist der 1.Kreis*/
-      {                                    /*mit girthstart seine Laenge*/
-       tw=girthstart();                    /*(=Taillenweite) ermittelt*/
-       if(tw==0)
-	  return;
-      }
-   }
+    // Checks if the row `mx` is fully populated (max degree).
+    while (mx < n && grad[mx] == k) {
+        semiverf(mx++);         // Refines partition for the next iteration
+        lblock = 1;
 
- while(mx<n&&grad[mx]==k)                  /*Zeile mx voll?*/
-      {
-       semiverf(mx++);                     /*verfeinerte Partition berechnen*/
-       lblock=1;                           /*Einfuegen wieder moeglichst links*/
 #ifdef JOBS
-       if(mx==mid_max||mx==splitlevel)
-	 {
-	  if(maxstartneu1(vm-1)==0)
-	     return;
-	  if(mx==splitlevel)               /*hier wird das aufteilen auf*/
-	     if(++calls%jobs!=jobnr)       /*mehrere jobs organisiert*/
-		return;
-	 }
+        if (mx == mid_max || mx == splitlevel) {
+            if (maxstartneu1(vm - 1) == 0)
+                return;
+            if (mx == splitlevel)
+                if (++calls % jobs != jobnr)
+                    return;
+        }
 #else
-       if(mx==mid_max)
-	  if(maxstartneu1(vm-1)==0)
-	     return;
+        if (mx == mid_max) {
+            if (maxstartneu1(vm - 1) == 0)
+                return;
+        }
 #endif
-      }                                    /*mx ist nun min. Knoten mit grad<k*/
+    }
 
- if(vm<=my)vm=my+1;	                   /*vm ist nun min. Knoten mit grad=0*/
+    if (vm <= my) vm = my + 1; // Ensures `vm` points to the minimum degree node with degree 0
 
- if(mx==n&&grad[n]==k)                     /*Bedingung fuer Regularitaet*/
-   {
-    if(maxstartneu(tw))
-      {
-       anz++;
+    // Checks for regularity
+    if (mx == n && grad[n] == k) {
+        if (maxstartneu(tw)) {
+            anz++;  // Counts generated graphs
+
 #ifdef STAB
-       if(printall)
-	 {
-	  fprintf(autfile,"\nGraph %ld:\n",anz);
-	  nachblist();
-	  fprintf(autfile,"Taillenweite: %d\n",tw);
-	  stabprint();
-	 }
-       else
-       if(toprint>0)
-	 {
-	  fprintf(autfile,"\nGraph %ld:\n",anz);
-	  nachblist();
-	  fprintf(autfile,"Taillenweite: %d\n",tw);
-	  stabprint();
-	  if(--toprint==0)
-	    {
-	     fclose(autfile);
-	     fprintf(ergfile,"          %ld Graphen erzeugt\r",anz);
-	     fflush(ergfile);
-	     fseek(ergfile,fpos,0);
-	    }
-	 }
+            if (print_all) {
+                fprintf(autfile, "\nGraph %ld:\n", anz);
+                nachblist();
+                fprintf(autfile, "Taillenweite: %d\n", tw);
+                stabprint();
+            } else if (to_print > 0) {
+                fprintf(autfile, "\nGraph %ld:\n", anz);
+                nachblist();
+                fprintf(autfile, "Taillenweite: %d\n", tw);
+                stabprint();
+                if (--to_print == 0) {
+                    fclose(autfile);
+                    fprintf(ergfile, "          %ld Graphen erzeugt\r", anz);
+                    fflush(ergfile);
+                    fseek(ergfile, fpos, 0);
+                }
+            }
 #endif
-#ifdef LIST                                /*Ausgabe*/
-       if(storeall)
-	  komprtofile();
-       else
-       if(tostore>0)
-	 {
-	  komprtofile();
-	  if(--tostore==0)
-	    {
-	     fclose(lstfile);
-	     fprintf(ergfile,"          %ld Graphen erzeugt\r",anz);
-	     fflush(ergfile);
-	     fseek(ergfile,fpos,0);
-	    }
-	 }
-       if(count)
-	 {
-	  if(anz%dez==0)
-	    {
-	     fprintf(ergfile,"          %ld Graphen erzeugt\r",anz);
-	     fflush(ergfile);
-	     fseek(ergfile,fpos,0);
-	     if(anz%(dez*count)==0)
-		dez*=10;
-	    }
-	 }
+
+#ifdef LIST
+            if (store_all)
+                komprtofile();
+            else if (to_store > 0) {
+                komprtofile();
+                if (--to_store == 0) {
+                    fclose(lstfile);
+                    fprintf(ergfile, "          %ld Graphen erzeugt\r", anz);
+                    fflush(ergfile);
+                    fseek(ergfile, fpos, 0);
+                }
+            }
+
+            if (count) {
+                if (anz % dez == 0) {
+                    fprintf(ergfile, "          %ld Graphen erzeugt\r", anz);
+                    fflush(ergfile);
+                    fseek(ergfile, fpos, 0);
+                    if (anz % (dez * count) == 0)
+                        dez *= 10;
+                }
+            }
 #endif
-       return;
-      }
-    springen=1;                            /*Lerneffekt aktivieren*/
+
+            return;
+        }
+        springen = 1;  // Activates a learning effect for optimizations
+        return;
+    }
+
+    // Edge insertion loop over available partitions
+    for (i = lblock; i <= part[mx][0]; i++) {
+        if ((my = part[mx][i] + einsen[mx][i]) < part[mx][i + 1]) {
+            if (grad[my] < k && my <= vm) {
+                // Insert edge (mx, my)
+                g[mx][my] = g[my][mx] = 1;
+                l[mx][++grad[mx]] = my;
+                l[my][++grad[my]] = mx;
+                einsen[mx][i]++;
+                lgrad[my]++;
+
+                // Recursive call
+                ordrek(mx, my, vm, tw, i);
+
+                // Remove edge (mx, my) and reset states
+                g[mx][my] = g[my][mx] = 0;
+                l[mx][grad[mx]] = 0;
+                l[my][grad[my]] = 0;
+                grad[mx]--;
+                grad[my]--;
+                lgrad[my]--;
+                einsen[mx][i]--;
+
+                // Additional constraints check
+                if (mx >= n - k && n - mx - 1 < k - grad[my])
+                    return;
+
+                if (springen) {
+                    if (g[i1][j1] == 0)
+                        springen = 0;
+                    else
+                        return;
+                }
+            }
+        }
+    }
     return;
-   }
-
- for(i=lblock;i<=part[mx][0];i++)          /*Einsetzen der neuen Kante*/
-     if((my=part[mx][i]+einsen[mx][i])<part[mx][i+1])
-       {                                   /*moegliche Kante (mx,my)*/
-	if(grad[my]<k&&my<=vm)             /*Bedingung my<=vm notw. fuer*/
-	  {                                /*zusammenhaengende Graphen*/
-	   g[mx][my]=g[my][mx]=1;
-	   l[mx][++grad[mx]]=my;
-	   l[my][++grad[my]]=mx;
-	   einsen[mx][i]++;
-	   lgrad[my]++;
-
-	   ordrek(mx,my,vm,tw,i);
-
-	   g[mx][my]=g[my][mx]=0;
-	   l[mx][grad[mx]]=0;              /*diese beiden Zeilen koennten*/
-	   l[my][grad[my]]=0;              /*noch weggelassen werden*/
-	   grad[mx]--;grad[my]--;
-	   lgrad[my]--;einsen[mx][i]--;
-
-	   if(mx>=n-k&&n-mx-1<k-grad[my])
-	      return;                      /*siehe (**)*/
-	   if(springen)
-	     {
-	      if(g[i1][j1]==0)
-		 springen=0;
-	      else
-		 return;
-	     }
-	  }
-       }
- return;
 }
 
 
+
 /*
- ordstart initialisiert die benoetigten Datenstrukturen:
+ ordstart initializes the necessary data structures:
 
- g enthaelt die Adjazenzmatrix, also
- g[i][j]=1,falls i,j verbunden, =0 sonst
+ g contains the adjacency matrix, meaning
+ g[i][j] = 1 if i and j are connected, = 0 otherwise.
 
- l enthaelt die Nachbarschaftsliste, d.h.
- l[i][1],...,l[i][k] sind die Nachbarn von i
+ l contains the neighborhood list, i.e.,
+ l[i][1], ..., l[i][k] are the neighbors of i.
 
- part[i] enthaelt die Blockzerlegung aufgrund
- der Eintraege in  Zeile i-1 und part[i-1].
- Zeile i muss so gefuellt werden, dass innerhalb
- der Bloecke von part[i] die Einsen links und
- die Nullen rechts stehen.
- part[i][0] : Anzahl der Bloecke;
- part[i][j] : Beginn des j-ten Blocks
-	      Ausnahme: j=part[i][0], dann n+1;
- part[0][i] : Ende des 1.Blocks von Zeile i vor
-	      evtl. Abspalten eines 1er Blocks
+ part[i] contains the block structure based on
+ the entries in row i-1 and part[i-1].
+ Row i must be filled so that, within the
+ blocks of part[i], the ones are on the left
+ and the zeros on the right.
+ part[i][0] : number of blocks;
+ part[i][j] : start of the j-th block
+              exception: if j = part[i][0], then n + 1;
+ part[0][i] : end of the first block of row i before
+              possibly splitting off a block of ones.
 
- einsen[i] enthaelt Anzahl der Einsen in Zeile i
- bzgl. der Blockzerlegung von part[i].
- einsen[i][j] : Anzahl der Einsen in Block j
+ einsen[i] contains the number of ones in row i
+ with respect to the block structure in part[i].
+ einsen[i][j] : number of ones in block j.
 
- lgrad[i] enthaelt Anzahl der Einsen
- in Zeile i links der Diagonalen
+ lgrad[i] contains the number of ones
+ in row i to the left of the diagonal.
 */
+
 
 void ordstart(_n,_k,_t,_mid_max,
 	      _splitlevel,_jobs,_jobnr,
 	      _lstfile,_autfile,_ergfile,
-	      _tostore,_toprint,_count,
-	      _storeall,_printall,_anz)
+	      _to_store,_to_print,_count,
+	      _store_all,_print_all,_anz)
+
 SCHAR _n,_k,_t,_mid_max,_splitlevel;
 UINT _jobs,_jobnr;
 FILE *_lstfile,*_autfile,*_ergfile;
-ULONG _toprint,_tostore,_count;
-SCHAR _storeall,_printall;
+ULONG _to_print,_to_store,_count;
+SCHAR _store_all,_print_all;
 ULONG *_anz;
 {
  SCHAR m,in=0,zu=1;
@@ -933,8 +1010,8 @@ ULONG *_anz;
  n=_n;k=_k;t=_t;mid_max=_mid_max;
  splitlevel=_splitlevel;jobs=_jobs;jobnr=_jobnr;
  lstfile=_lstfile;autfile=_autfile;ergfile=_ergfile;
- toprint=_toprint;tostore=_tostore;count=_count;
- storeall=_storeall;printall=_printall;
+ to_print=_to_print;to_store=_to_store;count=_count;
+ store_all=_store_all;print_all=_print_all;
  springen=girth_exact=calls=0;
  dez=1;
  anz=(*_anz);

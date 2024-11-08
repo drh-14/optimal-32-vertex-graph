@@ -1,4 +1,4 @@
-// Read the comment on the bottom function first to better understand what variables mean. It will def!!! Help
+// Read the comment on the bottom function first to better understand what variables mean
 #include "gendef.h"
 #include "functions.h"
 

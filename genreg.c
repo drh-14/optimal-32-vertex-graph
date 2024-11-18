@@ -1,17 +1,16 @@
 // Read the comment on the bottom function first to better understand what variables mean
 #include "gendef.h"
-#include "functions.h"
 
-static SCHAR n,k,t,mid_max,splitlevel;
-static ULONG to_store,to_print,count;
-static FILE  *ergfile,*lstfile,*autfile;
-static UINT  jobs,jobnr;
-static SCHAR store_all,print_all;
+static int n, k, t, mid_max, splitlevel;
+static unsigned long to_store, to_print,count;
+static FILE *resultFile, *lstfile, *autfile;
+static unsigned int  jobs,jobnr;
+static int store_all,print_all;
 
-static SCHAR springen,i1,j1,f0,f1,girth_exact;
-static SCHAR **g,**l,**part,**einsen,**transp,**zbk;
-static SCHAR *kmn,*grad,*lgrad,*lastcode;
-static ULONG calls,dez,anz;
+static int springen,i1,j1,f0,f1,girth_exact;
+static int **g,**l,**part,**einsen,**transp,**zbk;
+static int *kmn,*grad,*lgrad,*lastcode;
+static unsigned long calls,dez,anz;
 
 static long fpos;
 
@@ -30,14 +29,14 @@ static long fpos;
 
 
 #ifdef STAB  
-static SCHAR **aut;
+static int **aut;
 static int  erz,merz;
 
 // The function prints each 2D array of automorphism and its order.
 static void stabprint(){
 	int i,j;
-	long ord=1; // Stands for order
-	SCHAR next,last=0,mult=1;
+	long ord= 1; // Stands for order
+	int next,last=0,mult=1;
 
 	for(i=1;i<=erz;i++)
 		{
@@ -66,7 +65,7 @@ static void err(){
 
 // This function prints the list of neighboring nodes for each node in the graph
 static void neighbor_list(){
-	SCHAR i,j;
+	int i,j;
 	for(i=1;i<=n;i++)
 		{
 		fprintf(autfile,"\n%d : ",i);
@@ -110,8 +109,8 @@ static void compressToFile(){
 #else
 static void compressToFile()
 {
- SCHAR i,j,c,equ=1;
- UINT  h=0;
+ int i,j,c,equ=1;
+ unsigned int  h=0;
 
  for(i=1;i<=n;i++)
      for(j=1;j<=k;j++)
@@ -147,9 +146,9 @@ static void compressToFile()
  It is only called when
  the first cycle has just been closed.
 */
-static SCHAR girthStart()  // girth refers to the length of the shortest cycle in a graph
+static int girthStart()  // girth refers to the length of the shortest cycle in a graph
 {
- SCHAR tw=2,last=1,now=2,next;
+ int tw=2,last=1,now=2,next;
 
  while(now!=3)
       {
@@ -164,18 +163,16 @@ static SCHAR girthStart()  // girth refers to the length of the shortest cycle i
 }
 
 /*
- girthCheck2 tests whether the
- girth is reduced after inserting
- the edge (mx, my). If yes, the new
- girth is returned (i.e., G is not max),
- otherwise, 127 is returned.
+ girthCheck2 tests whether the girth is reduced after inserting the edge (mx , my).
+ If yes, the new girth is returned (i.e., G is not max). Otherwise, 127 is returned.
 */
-static SCHAR girthCheck2(mx,my,tw)
-SCHAR mx,my,tw;
+
+static int girthCheck2(mx, my, tw)
+int mx, my, tw;
 {
- SCHAR *status,*xnachb,*ynachb;
- SCHAR welle=1,a,i,j,x,y;
- xnachb=l[mx];ynachb=l[my];
+ int *status, *xnachb, *ynachb;
+ int welle=1, a, i, j, x, y;
+ xnachb = l[mx]; ynachb=l[my];
 
  if(tw==4)
    {
@@ -246,10 +243,10 @@ SCHAR mx,my,tw;
  whether node `v` lies on a girth circle. 
  If so, 1 is returned; otherwise, 0.
 */
-static SCHAR ongirth0(v,tw)
-SCHAR v,tw;
+static int ongirth0(v,tw)
+int v,tw;
 {
- SCHAR *status,last,a,h,i,j=0,x,y;
+ int *status,last,a,h,i,j=0,x,y;
  status=zbk[0];
  for(i=1;i<=n;i++)status[i]=0;
  status[v]=(-1);
@@ -308,10 +305,10 @@ SCHAR v,tw;
 
 
 // Also checks if node v is part of a cycle of girth tw
-static SCHAR ongirth1(v,tw)
-SCHAR v,tw;
+static int ongirth1(v,tw)
+int v,tw;
 {
- SCHAR *status,last,a,h,i,j=0,x,y;
+ int *status,last,a,h,i,j=0,x,y;
  status=zbk[0];
  for(i=1;i<=n;i++)status[i]=0;
  status[v]=(-1);
@@ -356,10 +353,10 @@ SCHAR v,tw;
 }
 
 // Determines if a specific node v participates in a cycle of girth tw.
-static SCHAR isNodeInCycle(v,tw)
-SCHAR v,tw;
+static int isNodeInCycle(v,tw)
+int v,tw;
 {
- SCHAR i,j,x;
+ int i,j,x;
  if(tw==3)
    {
     for(i=1;i<=k;i++)
@@ -380,9 +377,9 @@ SCHAR v,tw;
 
 // Finds and updates the maximum edge pair based on conditions specified in the loops.
 static void findMaxEdgePair(i,j)
-SCHAR i,j;
+int i,j;
 {
- SCHAR r,s,x,y,z,e;
+ int r,s,x,y,z,e;
  i1=1;j1=j;
  for(r=1;r<=i;r++)
     {
@@ -409,9 +406,9 @@ SCHAR i,j;
 
 // Reverses the permutation of nodes, modifying the kmn array.
 static void transpinv(mperm)
-SCHAR *mperm;
+int *mperm;
 {
- SCHAR i,x,re,li;
+ int i,x,re,li;
  i=2*mperm[0];
  while(i>0)
       {
@@ -424,12 +421,12 @@ SCHAR *mperm;
 }
 
 // Finds maximum values in a block of a given row, updating permutations.
-static SCHAR maxinblock(zeile,mperm,e,li,re)
-SCHAR *zeile,*mperm;
-SCHAR e,li,re;
+static int maxinblock(zeile,mperm,e,li,re)
+int *zeile,*mperm;
+int e,li,re;
 {
- SCHAR i,x;
- i=2*mperm[0];
+ int i,x;
+ i= 2* mperm[0];
  while(e>=0&&li<=re)
       {
        while(zeile[kmn[li]])
@@ -455,11 +452,11 @@ SCHAR e,li,re;
 }
 
 // Handles maximum values in a specific row, details are cut off in the provided code snippet.
-static SCHAR maxinzeile(tz)
-SCHAR tz;
+static int maxinzeile(tz)
+int tz;
 {
- SCHAR b,*zeile,*block,*eintr,*mperm;
- SCHAR e,li,re,erg=0;
+ int b,*zeile,*block,*eintr,*mperm;
+ int e,li,re,erg=0;
  zeile=g[kmn[tz]];
  block=part[tz];
  eintr=einsen[tz];
@@ -484,13 +481,13 @@ SCHAR tz;
 /*
 maxrekneu recursively explores permutations of node configurations, looking for an optimal arrangement based on the criteria defined in maxinzeile. This is a recursive backtracking function, leveraging swaps and recursive calls to systematically explore and record configurations that meet its conditions.
 */
-static SCHAR maxrekneu(tz)
-SCHAR tz;
+static int maxrekneu(tz)
+int tz;
 {
- SCHAR i,x,e;
- SCHAR erg;
+ int i,x,e;
+ int erg;
 #ifdef STAB
- SCHAR *aut1;
+ int *aut1;
  if(tz>=n-1)
    {
     aut1=aut[++erz];
@@ -524,9 +521,9 @@ SCHAR tz;
  return(erg);
 }
 
-static SCHAR start_max_search(SCHAR tw) {
-    SCHAR i, j, e;
-    SCHAR erg;
+static int start_max_search(int tw) {
+    int i, j, e;
+    int erg;
 
 #ifdef STAB
     erz = 0; // Reset 'erz' counter if STAB is defined
@@ -594,9 +591,9 @@ static SCHAR start_max_search(SCHAR tw) {
 }
 
 
-static SCHAR check_max_in_row(SCHAR tz) {
-    SCHAR e, li, re, erg = 0;
-    SCHAR b, *zeile, *block, *eintr, *mperm;
+static int check_max_in_row(int tz) {
+    int e, li, re, erg = 0;
+    int b, *zeile, *block, *eintr, *mperm;
 
     // Initialize pointers to arrays
     zeile = g[kmn[tz]];   // Row data for the current configuration of tz
@@ -629,9 +626,9 @@ static SCHAR check_max_in_row(SCHAR tz) {
 }
 
 
-static SCHAR find_max_recursively(SCHAR tz) {
-    SCHAR i, x, e;
-    SCHAR erg;
+static int find_max_recursively(int tz) {
+    int i, x, e;
+    int erg;
 
     // Base case: if tz has reached the last index, return 0 as no further recursion is needed
     if (tz == n - 1)
@@ -678,9 +675,9 @@ static SCHAR find_max_recursively(SCHAR tz) {
 }
 
 
-static SCHAR start_max_search(SCHAR vm) {
-    SCHAR i, j, e;
-    SCHAR erg;
+static int start_max_search(int vm) {
+    int i, j, e;
+    int erg;
 
     // Loop through elements from `vm` down to 2
     for (i = vm; i > 1; i--) {
@@ -750,8 +747,8 @@ static SCHAR start_max_search(SCHAR vm) {
  semiverf is only called
  if line x is filled.
 */
-static void initialize_next_partition(SCHAR x) {
-    SCHAR *nextpart, *block, blanz, blockgr, einsanz, i;
+static void initialize_next_partition(int x) {
+    int *nextpart, *block, blanz, blockgr, einsanz, i;
 
     // Set pointers to the current block and the next partition
     block = part[x];
@@ -815,8 +812,8 @@ static void initialize_next_partition(SCHAR x) {
  lblock Block of part[mx], where
  was used
 */
-static void ordrek(SCHAR mx, SCHAR my, SCHAR vm, SCHAR tw, SCHAR lblock) {
-    SCHAR i;
+static void ordrek(int mx, int my, int vm, int tw, int lblock) {
+    int i;
 
     // Checks if there's enough space to add an edge from node `mx` to achieve the required degree.
     if (my > n - k && grad[mx] < k && n - my < k - grad[mx])   
@@ -884,9 +881,9 @@ static void ordrek(SCHAR mx, SCHAR my, SCHAR vm, SCHAR tw, SCHAR lblock) {
                 stabprint();
                 if (--to_print == 0) {
                     fclose(autfile);
-                    fprintf(ergfile, "          %ld Graphen erzeugt\r", anz);
-                    fflush(ergfile);
-                    fseek(ergfile, fpos, 0);
+                    fprintf(resultFile, "          %ld Graphen erzeugt\r", anz);
+                    fflush(resultFile);
+                    fseek(resultFile, fpos, 0);
                 }
             }
 #endif
@@ -898,17 +895,17 @@ static void ordrek(SCHAR mx, SCHAR my, SCHAR vm, SCHAR tw, SCHAR lblock) {
                 komprtofile();
                 if (--to_store == 0) {
                     fclose(lstfile);
-                    fprintf(ergfile, "          %ld Graphen erzeugt\r", anz);
-                    fflush(ergfile);
-                    fseek(ergfile, fpos, 0);
+                    fprintf(resultFile, "          %ld Graphen erzeugt\r", anz);
+                    fflush(resultFile);
+                    fseek(resultFile, fpos, 0);
                 }
             }
 
             if (count) {
                 if (anz % dez == 0) {
-                    fprintf(ergfile, "          %ld Graphen erzeugt\r", anz);
-                    fflush(ergfile);
-                    fseek(ergfile, fpos, 0);
+                    fprintf(resultFile, "          %ld Graph generated\r", anz);
+                    fflush(resultFile);
+                    fseek(resultFile, fpos, 0);
                     if (anz % (dez * count) == 0)
                         dez *= 10;
                 }
@@ -993,66 +990,66 @@ static void ordrek(SCHAR mx, SCHAR my, SCHAR vm, SCHAR tw, SCHAR lblock) {
 
 void ordstart(_n,_k,_t,_mid_max,
 	      _splitlevel,_jobs,_jobnr,
-	      _lstfile,_autfile,_ergfile,
+	      _lstfile,_autfile,_resultFile,
 	      _to_store,_to_print,_count,
 	      _store_all,_print_all,_anz)
 
-SCHAR _n,_k,_t,_mid_max,_splitlevel;
-UINT _jobs,_jobnr;
-FILE *_lstfile,*_autfile,*_ergfile;
-ULONG _to_print,_to_store,_count;
-SCHAR _store_all,_print_all;
-ULONG *_anz;
+int _n,_k,_t,_mid_max,_splitlevel;
+unsigned int _jobs,_jobnr;
+FILE *_lstfile,*_autfile,*_resultFile;
+unsigned long _to_print,_to_store,_count;
+int _store_all,_print_all;
+unsigned long *_anz;
 {
- SCHAR m,in=0,zu=1;
+ int m,in=0,zu=1;
  int  h,i,j;
 
- n=_n;k=_k;t=_t;mid_max=_mid_max;
- splitlevel=_splitlevel;jobs=_jobs;jobnr=_jobnr;
- lstfile=_lstfile;autfile=_autfile;ergfile=_ergfile;
- to_print=_to_print;to_store=_to_store;count=_count;
- store_all=_store_all;print_all=_print_all;
- springen=girth_exact=calls=0;
- dez=1;
- anz=(*_anz);
- fpos=ftell(ergfile);
+ n = _n; k = _k; t = _t; mid_max = _mid_max;
+ splitlevel = _splitlevel; jobs = _jobs; jobnr = _jobnr;
+ lstfile = _lstfile; autfile = _autfile; resultFile = _resultFile;
+ to_print = _to_print; to_store = _to_store; count = _count;
+ store_all = _store_all; print_all = _print_all;
+ springen = girth_exact = calls = 0;
+ dez = 1;
+ anz = (*_anz);
+ fpos = ftell(resultFile);
 
- if(k>=n)
+ if(k >= n)
     return;
- if(k==0||k==1)
+ if(k == 0 || k == 1)
     return;
- if(n%2==1&&k%2==1)
+ if(n % 2 == 1 && k % 2 == 1)
     return;
 
- if(!(g     =(SCHAR**)calloc(n+1,sizeof(SCHAR*))))err();
- if(!(l     =(SCHAR**)calloc(n+1,sizeof(SCHAR*))))err();
- if(!(zbk   =(SCHAR**)calloc(n+1,sizeof(SCHAR*))))err();
- if(!(transp=(SCHAR**)calloc(n+1,sizeof(SCHAR*))))err();
- if(!(einsen=(SCHAR**)calloc(n+1,sizeof(SCHAR*))))err();
- if(!(part  =(SCHAR**)calloc(n+1,sizeof(SCHAR*))))err();
- if(!(kmn   =(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
- if(!(grad  =(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
- if(!(lgrad =(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
+ if(!(g = (int**)calloc(n + 1, sizeof(int*)))) err();
+ if(!(l = (int**)calloc(n+1,sizeof(int*)))) err();
+ if(!(zbk = (int**)calloc(n+1,sizeof(int*)))) err();
+ if(!(transp = (int**)calloc(n+1,sizeof(int*)))) err();
+ if(!(einsen=(int**)calloc(n+1,sizeof(int*)))) err();
+ if(!(part  =(int**)calloc(n+1,sizeof(int*)))) err();
+ if(!(kmn   =(int*)calloc(n+1,sizeof(int)))) err();
+ if(!(grad  =(int*)calloc(n+1,sizeof(int)))) err();
+ if(!(lgrad =(int*)calloc(n+1,sizeof(int)))) err();
 
  for(i=0;i<=n;i++)
     {
-     if(!(g[i]     =(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
-     if(!(l[i]     =(SCHAR*)calloc(k+1,sizeof(SCHAR))))err();
-     if(!(transp[i]=(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
-     if(!(einsen[i]=(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
-     if(!(part[i]  =(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
-     if(!(zbk[i]   =(SCHAR*)calloc(n+1+k*2,sizeof(SCHAR))))err();
+     if(!(g[i]     =(int*)calloc(n+1,sizeof(int))))err();
+     if(!(l[i]     =(int*)calloc(k+1,sizeof(int))))err();
+     if(!(transp[i]=(int*)calloc(n+1,sizeof(int))))err();
+     if(!(einsen[i]=(int*)calloc(n+1,sizeof(int))))err();
+     if(!(part[i]  =(int*)calloc(n+1,sizeof(int))))err();
+     if(!(zbk[i]   =(int*)calloc(n+1+k*2,sizeof(int))))err();
     }
 
 #ifdef STAB
  merz=n*(n-1)/2+1; /*n+(n-2)*k wuerde genuegen*/
- if(!(aut=(SCHAR**)calloc(merz+1,sizeof(SCHAR*))))err();
+ if(!(aut=(int**)calloc(merz+1,sizeof(int*))))err();
  for(i=1;i<=merz;i++)
-     if(!(aut[i]=(SCHAR*)calloc(n+1,sizeof(SCHAR))))err();
+     if(!(aut[i]=(int*)calloc(n+1,sizeof(int))))err();
 #endif
 
 #ifdef SHORTCODE
- if(!(lastcode=(SCHAR*)calloc(n*k/2+1,sizeof(SCHAR*))))err();
+ if(!(lastcode=(int*)calloc(n*k/2+1,sizeof(int*))))err();
 #endif
 
  for(i=1;i<=n;i++)
@@ -1142,6 +1139,6 @@ ULONG *_anz;
  free(einsen);
  free(transp);
 
- *_anz=anz;
+ *_anz = anz;
  return;
 }

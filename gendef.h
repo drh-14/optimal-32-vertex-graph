@@ -5,12 +5,12 @@
 #define STAB
 
 // Define boundary values for parameters
-#define MINN  3  // Minimum Number of Nodes
-#define MAXN 99  // Maximum Number of Nodes
-#define MINK  2  // Minimum Value for k, in the context of k-connected graph
-#define MAXK  9  // Maximum Value for k, in the context of k-connected graph
-#define MINT  3  // Minimum Value for t; t is used to control the lower bound of girth (graphs with girth ≥ t)
-#define MAXT  9  // Maximum Value for t; t is used to control the lower bound of girth (graphs with girth ≥ t)
+#define MIN_N  3  // Minimum Number of Nodes
+#define MAX_N 99  // Maximum Number of Nodes
+#define MIN_K  2  // Minimum Value for k, in the context of k-connected graph
+#define MAX_K  9  // Maximum Value for k, in the context of k-connected graph
+#define MIN_T  3  // Minimum Value for t; t is used to control the lower bound of girth (graphs with girth ≥ t)
+#define MAX_T  9  // Maximum Value for t; t is used to control the lower bound of girth (graphs with girth ≥ t)
 
 #define NOTSET 127
 #define COUNTSTEP 100
@@ -67,8 +67,4 @@
 #else
 #define APP "lst"
 #endif
-
-// Define Types: just to make typing easier
-typedef int SCHAR; 
-typedef unsigned long ULONG;  
-typedef unsigned int UINT;    
+    

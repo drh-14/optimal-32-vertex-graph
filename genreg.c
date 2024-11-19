@@ -4,14 +4,13 @@
 static int n, k, t, mid_max, splitlevel;
 static unsigned long to_store, to_print,count;
 static FILE *resultFile, *lstfile, *autfile;
-static unsigned int  jobs,jobnr;
-static int store_all,print_all;
+static unsigned int jobs, jobNumber;
+static int store_all, print_all;
 
-static int springen,i1,j1,f0,f1,girth_exact;
-static int **g,**l,**part,**einsen,**transp,**zbk;
-static int *kmn,*grad,*lgrad,*lastcode;
-static unsigned long calls,dez,anz;
-
+static int jump , i_1, j_1, f_0, f_1, girth_exact;
+static int **g, **l, **part, **einsen, **transp, **zbk;
+static int *kmn, *grad, *lgrad, *lastcode;
+static unsigned long calls, dez, anz;
 static long fpos;
 
 /*
@@ -27,33 +26,32 @@ static long fpos;
  Shortcode implemented
 */
 
-
 #ifdef STAB  
 static int **aut;
-static int  erz,merz;
+static int  erz, merz;
 
 // The function prints each 2D array of automorphism and its order.
 static void stabprint(){
-	int i,j;
-	long ord= 1; // Stands for order
+	int i, j;
+	long order = 1;
 	int next,last=0,mult=1;
 
 	for(i=1;i<=erz;i++)
 		{
-		next=aut[i][0];
-		if(last==next)
+		next= aut[i][0];
+		if(last == next){
 		mult++;
-		else
-		{
-		last=next;
-		ord*=mult;
-		mult=2;
+        }
+		else{
+		last = next;
+		order *= mult;
+		mult = 2;
 		}
 		fprintf(autfile,"\n%d :",next);
 		for(j=1;j<=n;j++)
-		fprintf(autfile," %d",aut[i][j]);
+		fprintf(autfile," %d", aut[i][j]);
 		}
-	fprintf(autfile,"\nOrder: %ld\n\n",ord*mult);
+	fprintf(autfile,"\nOrder: %ld\n\n", order * mult);
 }
 #endif
 
@@ -63,27 +61,24 @@ static void err(){
 	exit(0);
 }
 
-// This function prints the list of neighboring nodes for each node in the graph
+// Prints the list of neighboring nodes for each node in the graph
 static void neighbor_list(){
-	int i,j;
-	for(i=1;i<=n;i++)
+	int i, j;
+	for(i = 1;i <= n;i++)
 		{
-		fprintf(autfile,"\n%d : ",i);
-		for(j=1;j<=grad[i];j++)
+		fprintf(autfile,"\n%d : ", i);
+		for(j = 1; j <= grad[i]; j++)
 		fprintf(autfile,"%d ",l[i][j]);
 		}
 	fprintf(autfile,"\n");
 }
 
 /*
- (f0)f1 is the smallest node for which,
- based on the girth and the degree, an
- edge is (not) predetermined.
-
+ (f_0)f_1 is the smallest node for which, based on the girth and the degree,
+  an edge is (not) predetermined.
  Example: k=3, t=3 -> f1=2, f0=5
           k=3, t=5 -> f1=5, f0=11
 */
-
 
 #ifndef SHORTCODE
 
@@ -109,8 +104,8 @@ static void compressToFile(){
 #else
 static void compressToFile()
 {
- int i,j,c,equ=1;
- unsigned int  h=0;
+ int i, j, c, equ = 1;
+ unsigned int h = 0;
 
  for(i=1;i<=n;i++)
      for(j=1;j<=k;j++)
@@ -121,13 +116,11 @@ static void compressToFile()
 	    if(equ&&c!=lastcode[++h])
 	      {
 	       equ=0;
-	       putc(h-1,lstfile);  /* Number of matching edges */
-	       lastcode[h]=c;
+	       putc(h - 1,lstfile);  /* Number of matching edges */
+	       lastcode[h] = c;
 	       putc(c,lstfile);   /* Only for n < 256 */
 	      }
-	    else
-	    if(!equ)
-	      {
+	    else if(!equ){
 	       lastcode[++h]=c;
 	       putc(c,lstfile);
 	      }
@@ -136,28 +129,20 @@ static void compressToFile()
 }
 #endif
 
-
-
 /*
- girthStart determines the girth
- and returns it or 0 if
- node 3 does not lie on the
- (first girth circle).
- It is only called when
- the first cycle has just been closed.
+ girthStart determines the girth and returns it or 0 if node 3 does not lie on the first girth circle.
+ It is only called when the first cycle has just been closed.
 */
-static int girthStart()  // girth refers to the length of the shortest cycle in a graph
-{
- int tw=2,last=1,now=2,next;
-
- while(now!=3)
-      {
-       next=l[now][1];
-       if(next==last)
-	  next=l[now][2];
-       if(next==0||next==2)
+static int girthStart(){  // girth refers to the length of the shortest cycle in a graph
+ int tw = 2,last = 1,now = 2,next;
+ while(now != 3){
+       next = l[now][1];
+       if(next == last)
+	  next = l[now][2];
+       if(next == 0 || next == 2){
 	  return(0);
-       last=now;now=next;tw++;
+      }
+       last = now;now = next;tw++;
       }
  return(tw);
 }
@@ -171,30 +156,28 @@ static int girthCheck2(mx, my, tw)
 int mx, my, tw;
 {
  int *status, *xnachb, *ynachb;
- int welle=1, a, i, j, x, y;
+ int welle = 1,a,i,j,x,y;
  xnachb = l[mx]; ynachb=l[my];
 
- if(tw==4)
-   {
-    for(i=1;i<grad[mx];i++)
+ if(tw == 4){
+    for(i = 1;i < grad[mx];i++)
        {
-	x=xnachb[i];
-	for(j=1;j<grad[my];j++)
-	    if(x==ynachb[j])
+	x= xnachb[i];
+	for(j = 1;j < grad[my];j++)
+	    if(x == ynachb[j])
 	       return(3);
        }
     return(127);
    }
 
- if(tw==5)
+ if(tw == 5)
    {
-    for(i=1;i<grad[mx];i++)
-       {
-	x=xnachb[i];
-	for(j=1;j<grad[my];j++)
+    for(i = 1;i < grad[mx];i++){
+	x = xnachb[i];
+	for(j = 1;j < grad[my];j++)
 	   {
-	    y=ynachb[j];
-	    if(x==y)
+	    y= ynachb[j];
+	    if(x == y)
 	       return(3);
 	    if(g[x][y])
 	       return(4);
@@ -204,21 +187,18 @@ int mx, my, tw;
    }
 
  status=zbk[0];
- for(i=1;i<=n;i++)status[i]=0;
- status[mx]=1;status[my]=2;
- zbk[2][1]=my;zbk[2][0]=1;
- for(i=1;i<grad[mx];i++)
-    {
-     x=xnachb[i];
-     zbk[3][i]=x;
-     status[x]=3;
+ for(i = 1;i <= n;i++) {status[i]=0;}
+ status[mx] = 1;status[my] = 2;
+ zbk[2][1] = my;zbk[2][0] = 1;
+ for(i = 1;i < grad[mx];i++){
+     x = xnachb[i];
+     zbk[3][i] = x;
+     status[x] = 3;
     }
- zbk[3][0]=grad[mx]-1;
- while(++welle<tw-1)
-      {
+ zbk[3][0] = grad[mx]-1;
+ while(++welle < tw - 1){
        a=0;
-       for(i=1;i<=zbk[welle][0];i++)
-	  {
+       for(i=1;i<= zbk[welle][0];i++){
 	   x=zbk[welle][i];
 	   for(j=1;j<=grad[x];j++)
 	      {
@@ -243,12 +223,12 @@ int mx, my, tw;
  whether node `v` lies on a girth circle. 
  If so, 1 is returned; otherwise, 0.
 */
-static int ongirth0(v,tw)
+static int ongirth_0(v,tw)
 int v,tw;
 {
  int *status,last,a,h,i,j=0,x,y;
  status=zbk[0];
- for(i=1;i<=n;i++)status[i]=0;
+ for(i = 1;i <= n;i++)status[i]=0;
  status[v]=(-1);
  for(h=1;h<=k;h++)
     {
@@ -370,38 +350,36 @@ int v,tw;
    }
  else
  if(tw%2==0)
-    return(ongirth0(v,tw));
+    return(ongirth_0(v,tw));
  else
     return(ongirth1(v,tw));
 }
 
 // Finds and updates the maximum edge pair based on conditions specified in the loops.
-static void findMaxEdgePair(i,j)
+static void findMaxEdgePair(i,j){
 int i,j;
-{
  int r,s,x,y,z,e;
- i1=1;j1=j;
- for(r=1;r<=i;r++)
-    {
-     e=lgrad[r];
-     for(s=r+1;e<k&&(r<i||s<j);s++)
+ i_1 = 1; j_1 = j;
+ for(r = 1;r <= i;r++){
+     e = lgrad[r];
+     for(s = r + 1;e < k && (r < i || s < j);s++)
 	{
-	 z=g[r][s];e+=z;
+	 z = g[r][s];e += z;
 	 if(z)
-	   {
+{
 	    x=kmn[r];y=kmn[s];
 	    if(x>y)
 	      {z=x;x=y;y=z;}
-	    if(x>i1||(x==i1&&y>j1))
-	      {i1=x;j1=y;}
+	    if(x>i_1||(x==i_1&&y>j_1))
+	      {i_1=x;j_1=y;}
 	   }
 	}
     }
  x=kmn[i];y=kmn[j];
  if(x>y)
    {z=x;x=y;y=z;}
- if(x>i1||(x==i1&&y>j1))
-   {i1=x;j1=y;}
+ if(x > i_1 ||(x == i_1 && y>j_1))
+   {i_1 = x; j_1 = y;}
 }
 
 // Reverses the permutation of nodes, modifying the kmn array.
@@ -421,7 +399,7 @@ int *mperm;
 }
 
 // Finds maximum values in a block of a given row, updating permutations.
-static int maxinblock(zeile,mperm,e,li,re)
+static int maxInBlock(zeile,mperm,e,li,re)
 int *zeile,*mperm;
 int e,li,re;
 {
@@ -452,7 +430,7 @@ int e,li,re;
 }
 
 // Handles maximum values in a specific row, details are cut off in the provided code snippet.
-static int maxinzeile(tz)
+static int maxInRow(tz)
 int tz;
 {
  int b,*zeile,*block,*eintr,*mperm;
@@ -467,7 +445,7 @@ int tz;
     {
      e=eintr[b];
      li=block[b];re=block[b+1]-1;
-     erg=maxinblock(zeile,mperm,e,li,re);
+     erg=maxInBlock(zeile,mperm,e,li,re);
     }
  if(erg==0)
     return(0);
@@ -500,7 +478,7 @@ int tz;
     return(0);
 #endif
  /*x=kmn[tz];*/
- erg=maxinzeile(tz);
+ erg=maxInRow(tz);
  if(erg==0)
     erg=maxrekneu(tz+1);
  transpinv(transp[tz]);
@@ -510,7 +488,7 @@ int tz;
      x=kmn[tz];
      kmn[tz]=kmn[i];
      kmn[i]=x;
-     erg=maxinzeile(tz);
+     erg= maxInRow(tz);
      if(erg==0)
 	erg=maxrekneu(tz+1);
      transpinv(transp[tz]);
@@ -537,7 +515,7 @@ static int start_max_search(int tw) {
             kmn[i] = j;
             kmn[j] = i; // Swap elements (transposition (i, j))
             
-            erg = maxinzeile(i); // Check if this row's configuration is optimal
+            erg = maxInRow(i); // Check if this row's configuration is optimal
             
             if (erg == 0) {
                 erg = maxrekneu(i + 1); // Traverse subclass (i, j)Stab{0,...,i}
@@ -565,7 +543,7 @@ static int start_max_search(int tw) {
             kmn[1] = j;
             kmn[j] = 1; // Swap elements (transposition (1, j))
 
-            erg = maxinzeile(1); // Check if this row's configuration is optimal
+            erg = maxInRow(1); // Check if this row's configuration is optimal
 
             if (erg == 0) {
                 erg = maxrekneu(2); // Traverse subclass (1, j)Stab{0,...,1}
@@ -610,7 +588,7 @@ static int check_max_in_row(int tz) {
         re = block[b + 1] - 1;  // End index of the current block
         
         // Check for maximum configuration within the block
-        erg = maxinblock(zeile, mperm, e, li, re); 
+        erg = maxInBlock(zeile, mperm, e, li, re); 
 
         // maxinblock returns a value indicating the optimality of the block,
         // and we stop early if an optimal configuration is found.
@@ -850,7 +828,7 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
             if (maxstartneu1(vm - 1) == 0)
                 return;
             if (mx == splitlevel)
-                if (++calls % jobs != jobnr)
+                if (++calls % jobs != jobNumber)
                     return;
         }
 #else
@@ -914,7 +892,7 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
 
             return;
         }
-        springen = 1;  // Activates a learning effect for optimizations
+        jump = 1;  // Activates a learning effect for optimizations
         return;
     }
 
@@ -945,9 +923,9 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
                 if (mx >= n - k && n - mx - 1 < k - grad[my])
                     return;
 
-                if (springen) {
-                    if (g[i1][j1] == 0)
-                        springen = 0;
+                if (jump) {
+                    if (g[i_1][j_1] == 0)
+                        jump = 0;
                     else
                         return;
                 }
@@ -1005,11 +983,11 @@ unsigned long *_anz;
  int  h,i,j;
 
  n = _n; k = _k; t = _t; mid_max = _mid_max;
- splitlevel = _splitlevel; jobs = _jobs; jobnr = _jobnr;
+ splitlevel = _splitlevel; jobs = _jobs; jobNumber = _jobnr;
  lstfile = _lstfile; autfile = _autfile; resultFile = _resultFile;
  to_print = _to_print; to_store = _to_store; count = _count;
  store_all = _store_all; print_all = _print_all;
- springen = girth_exact = calls = 0;
+ jump = girth_exact = calls = 0;
  dez = 1;
  anz = (*_anz);
  fpos = ftell(resultFile);
@@ -1049,10 +1027,10 @@ unsigned long *_anz;
 #endif
 
 #ifdef SHORTCODE
- if(!(lastcode=(int*)calloc(n*k/2+1,sizeof(int*))))err();
+ if(!(lastcode = (int*)calloc(n * k /2 + 1,sizeof(int*))))err();
 #endif
 
- for(i=1;i<=n;i++)
+ for(i = 1;i <= n;i++)
      kmn[i]=i;
 
  part[0][1]=n;
@@ -1061,11 +1039,12 @@ unsigned long *_anz;
  part[1][2]=n+1;
  einsen[1][1]=k;
 
- for(i=3;i<=t;i++)
+ for(i = 3; i <= t;i++)
     {
-     in+=zu;
-     if(i%2==0)
-	zu*=(k-1);
+     in += zu;
+     if(i % 2 == 0){
+	  zu *= (k-1);
+      }
     }
 
  if(in*(k-1)+2>n)
@@ -1092,7 +1071,7 @@ unsigned long *_anz;
      einsen[i][part[i][0]]=k-1;
     }
 
- f1=i;f0=j;
+ f_1 = i; f_0 = j;
  m=(--j);--i;
 
  if(girth_exact)

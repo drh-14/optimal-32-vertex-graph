@@ -8,7 +8,7 @@ static unsigned int jobs, jobNumber;
 static int store_all, print_all;
 
 static int jump , i_1, j_1, f_0, f_1, girth_exact;
-static int **g, **l, **part, **einsen, **transp, **zbk;
+static int **g, **l, **part, **ones, **transp, **zbk;
 static int *kmn, *grad, *lgrad, *lastcode;
 static unsigned long calls, dez, anz;
 static long fpos;
@@ -294,9 +294,9 @@ int v,tw;
  status[v]=(-1);
  for(h=1;h<=k;h++)
     {
-     last=tw/2+h-1;
+     last= tw / 2 + h - 1;
      x=l[v][h];status[x]=h;
-     zbk[last][1]=x;zbk[last][0]=1;
+     zbk[last][1] = x;zbk[last][0] = 1;
      while(last>h)
 	  {
 	   a=0;
@@ -437,7 +437,7 @@ int tz;
  int e,li,re,erg=0;
  zeile=g[kmn[tz]];
  block=part[tz];
- eintr=einsen[tz];
+ eintr = ones[tz];
  mperm=transp[tz];
  mperm[0]=0;
 
@@ -576,7 +576,7 @@ static int check_max_in_row(int tz) {
     // Initialize pointers to arrays
     zeile = g[kmn[tz]];   // Row data for the current configuration of tz
     block = part[tz];     // Block partition information for tz
-    eintr = einsen[tz];   // Entry information for tz
+    eintr = ones[tz];   // Entry information for tz
     mperm = transp[tz];   // Permutation data for tz
 
     mperm[0] = 0;  // Reset the permutation index
@@ -732,7 +732,7 @@ static void initialize_next_partition(int x) {
     block = part[x];
     blanz = block[0];                 // Number of blocks in `part[x]`
     nextpart = part[x + 1];           // Prepare next partition block
-    einsanz = einsen[x][1];           // Number of special elements (e.g., "ones") in the first sub-block
+    einsanz = ones[x][1];           // Number of special elements (e.g., "ones") in the first sub-block
     blockgr = block[2] - block[1];    // Size of the first sub-block in the partition
 
     // Set up next partition based on special cases for block sizes
@@ -759,7 +759,7 @@ static void initialize_next_partition(int x) {
 
     // Loop through remaining blocks in the partition
     for (i = 2; i <= blanz; i++) {
-        einsanz = einsen[x][i];                   // Number of special elements in the current block
+        einsanz = ones[x][i];                   // Number of special elements in the current block
         blockgr = block[i + 1] - block[i];        // Calculate the current block size
 
         if (einsanz == blockgr || einsanz == 0) {
@@ -792,11 +792,9 @@ static void initialize_next_partition(int x) {
 */
 static void ordrek(int mx, int my, int vm, int tw, int lblock) {
     int i;
-
     // Checks if there's enough space to add an edge from node `mx` to achieve the required degree.
     if (my > n - k && grad[mx] < k && n - my < k - grad[mx])   
         return;
-
     // Checks for space in the row if `mx` is close to reaching the max degree `k`.
     if (mx >= n - k && grad[mx] == k) {
         for (i = my + 1; i <= n; i++) {
@@ -804,7 +802,6 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
                 return;
         }
     }
-
     // `my < vm` indicates the need to check for new cycles in the graph.
     if (my < vm) {
         // Checks girth conditions
@@ -817,12 +814,10 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
                 return;
         }
     }
-
     // Checks if the row `mx` is fully populated (max degree).
     while (mx < n && grad[mx] == k) {
         semiverf(mx++);         // Refines partition for the next iteration
         lblock = 1;
-
 #ifdef JOBS
         if (mx == mid_max || mx == splitlevel) {
             if (maxstartneu1(vm - 1) == 0)
@@ -838,9 +833,7 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
         }
 #endif
     }
-
     if (vm <= my) vm = my + 1; // Ensures `vm` points to the minimum degree node with degree 0
-
     // Checks for regularity
     if (mx == n && grad[n] == k) {
         if (maxstartneu(tw)) {
@@ -898,13 +891,13 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
 
     // Edge insertion loop over available partitions
     for (i = lblock; i <= part[mx][0]; i++) {
-        if ((my = part[mx][i] + einsen[mx][i]) < part[mx][i + 1]) {
+        if ((my = part[mx][i] + ones[mx][i]) < part[mx][i + 1]) {
             if (grad[my] < k && my <= vm) {
                 // Insert edge (mx, my)
                 g[mx][my] = g[my][mx] = 1;
                 l[mx][++grad[mx]] = my;
                 l[my][++grad[my]] = mx;
-                einsen[mx][i]++;
+                ones[mx][i]++;
                 lgrad[my]++;
 
                 // Recursive call
@@ -917,13 +910,13 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
                 grad[mx]--;
                 grad[my]--;
                 lgrad[my]--;
-                einsen[mx][i]--;
+                ones[mx][i]--;
 
                 // Additional constraints check
-                if (mx >= n - k && n - mx - 1 < k - grad[my])
+                if(mx >= n - k && n - mx - 1 < k - grad[my])
                     return;
 
-                if (jump) {
+                if(jump){
                     if (g[i_1][j_1] == 0)
                         jump = 0;
                     else
@@ -935,10 +928,8 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
     return;
 }
 
-
-
 /*
- ordstart initializes the necessary data structures:
+ initialize initializes the necessary data structures:
 
  g contains the adjacency matrix, meaning
  g[i][j] = 1 if i and j are connected, = 0 otherwise.
@@ -957,16 +948,16 @@ static void ordrek(int mx, int my, int vm, int tw, int lblock) {
  part[0][i] : end of the first block of row i before
               possibly splitting off a block of ones.
 
- einsen[i] contains the number of ones in row i
+ ones[i] contains the number of ones in row i
  with respect to the block structure in part[i].
- einsen[i][j] : number of ones in block j.
+ ones[i][j] : number of ones in block j.
 
  lgrad[i] contains the number of ones
  in row i to the left of the diagonal.
 */
 
 
-void ordstart(_n,_k,_t,_mid_max,
+void initialize(_n,_k,_t,_mid_max,
 	      _splitlevel,_jobs,_jobnr,
 	      _lstfile,_autfile,_resultFile,
 	      _to_store,_to_print,_count,
@@ -1003,7 +994,7 @@ unsigned long *_anz;
  if(!(l = (int**)calloc(n+1,sizeof(int*)))) err();
  if(!(zbk = (int**)calloc(n+1,sizeof(int*)))) err();
  if(!(transp = (int**)calloc(n+1,sizeof(int*)))) err();
- if(!(einsen=(int**)calloc(n+1,sizeof(int*)))) err();
+ if(!(ones = (int**)calloc(n+1,sizeof(int*)))) err();
  if(!(part  =(int**)calloc(n+1,sizeof(int*)))) err();
  if(!(kmn   =(int*)calloc(n+1,sizeof(int)))) err();
  if(!(grad  =(int*)calloc(n+1,sizeof(int)))) err();
@@ -1014,7 +1005,7 @@ unsigned long *_anz;
      if(!(g[i]     =(int*)calloc(n+1,sizeof(int))))err();
      if(!(l[i]     =(int*)calloc(k+1,sizeof(int))))err();
      if(!(transp[i]=(int*)calloc(n+1,sizeof(int))))err();
-     if(!(einsen[i]=(int*)calloc(n+1,sizeof(int))))err();
+     if(!(ones[i] = (int*)calloc(n+1,sizeof(int))))err();
      if(!(part[i]  =(int*)calloc(n+1,sizeof(int))))err();
      if(!(zbk[i]   =(int*)calloc(n+1+k*2,sizeof(int))))err();
     }
@@ -1037,7 +1028,7 @@ unsigned long *_anz;
  part[1][0]=1;
  part[1][1]=2;
  part[1][2]=n+1;
- einsen[1][1]=k;
+ ones[1][1]=k;
 
  for(i = 3; i <= t;i++)
     {
@@ -1068,7 +1059,7 @@ unsigned long *_anz;
 	 g[i][j]=g[j][i]=1;
 	 lgrad[j++]++;
 	}
-     einsen[i][part[i][0]]=k-1;
+     ones[i][part[i][0]]=k-1;
     }
 
  f_1 = i; f_0 = j;
@@ -1083,7 +1074,7 @@ unsigned long *_anz;
     g[i][j]=g[j][i]=1;
     lgrad[j]++;
     while(part[i][h]!=j)h++;
-    einsen[i][h]++;
+    ones[i][h]++;
    }
 
  ordrek(i,j,m,0,1);
@@ -1104,7 +1095,7 @@ unsigned long *_anz;
      free(l[i]);
      free(zbk[i]);
      free(transp[i]);
-     free(einsen[i]);
+     free(ones[i]);
      free(part[i]);
     }
 
@@ -1115,7 +1106,7 @@ unsigned long *_anz;
  free(part);
  free(grad);
  free(lgrad);
- free(einsen);
+ free(ones);
  free(transp);
 
  *_anz = anz;

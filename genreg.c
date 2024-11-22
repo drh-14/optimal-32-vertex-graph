@@ -1,13 +1,12 @@
-// Read the comment on the bottom function first to better understand what variables mean
 #include "gendef.h"
 
 static int n, k, t, mid_max, splitlevel;
-static unsigned long to_store, to_print,count;
+static unsigned long to_store, to_print, count;
 static FILE *resultFile, *lstfile, *autfile;
 static unsigned int jobs, jobNumber;
 static int store_all, print_all;
 
-static int jump , i_1, j_1, f_0, f_1, girth_exact;
+static int jump, i_1, j_1, f_0, f_1, girth_exact;
 static int **g, **l, **part, **ones, **transp, **zbk;
 static int *kmn, *grad, *lgrad, *lastcode;
 static unsigned long calls, dez, anz;
@@ -36,19 +35,18 @@ static void stabprint(){
 	long order = 1;
 	int next,last=0,mult=1;
 
-	for(i=1;i<=erz;i++)
-		{
-		next= aut[i][0];
+	for(i = 1;i <= erz;i++){
+		next = aut[i][0];
 		if(last == next){
-		mult++;
+		  mult++;
         }
 		else{
-		last = next;
-		order *= mult;
-		mult = 2;
+		  last = next;
+		  order *= mult;
+		  mult = 2;
 		}
 		fprintf(autfile,"\n%d :",next);
-		for(j=1;j<=n;j++)
+		for(j = 1;j <= n;j++)
 		fprintf(autfile," %d", aut[i][j]);
 		}
 	fprintf(autfile,"\nOrder: %ld\n\n", order * mult);
@@ -102,20 +100,15 @@ static void compressToFile(){
 }
 
 #else
-static void compressToFile()
-{
+static void compressToFile(){
  int i, j, c, equ = 1;
  unsigned int h = 0;
-
- for(i=1;i<=n;i++)
-     for(j=1;j<=k;j++)
-	{
-	 c=l[i][j];
-	 if(c>i)
-	   {
-	    if(equ&&c!=lastcode[++h])
-	      {
-	       equ=0;
+ for(i = 1;i <= n;i++)
+     for(j = 1;j <= k;j++){
+	   c=l[i][j];
+	   if(c>i){
+	    if(equ && c != lastcode[++h]){
+	       equ = 0;
 	       putc(h - 1,lstfile);  /* Number of matching edges */
 	       lastcode[h] = c;
 	       putc(c,lstfile);   /* Only for n < 256 */
@@ -152,17 +145,14 @@ static int girthStart(){  // girth refers to the length of the shortest cycle in
  If yes, the new girth is returned (i.e., G is not max). Otherwise, 127 is returned.
 */
 
-static int girthCheck2(mx, my, tw)
-int mx, my, tw;
-{
+static int girthCheck2(mx, my, tw){
+ int mx, my, tw;
  int *status, *xnachb, *ynachb;
  int welle = 1,a,i,j,x,y;
- xnachb = l[mx]; ynachb=l[my];
-
+ xnachb = l[mx]; ynachb = l[my];
  if(tw == 4){
-    for(i = 1;i < grad[mx];i++)
-       {
-	x= xnachb[i];
+    for(i = 1;i < grad[mx];i++){
+	x = xnachb[i];
 	for(j = 1;j < grad[my];j++)
 	    if(x == ynachb[j])
 	       return(3);

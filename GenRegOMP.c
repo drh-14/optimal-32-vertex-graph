@@ -99,11 +99,9 @@ int main (int argc, char *argv[])
 
 	// now the parallel processing is initialized and executed
 	omp_set_num_threads(iNumThreads);
-
 	#pragma omp parallel for schedule(dynamic)
 	for(iTask= 0;iTask<iNumTasks;iTask++)
 		CallGenReg(iNodes, iDegree, iGirth, iTask, iNumTasks);
-
 	printf("Completed\n");
 
 	// finally read the result files
@@ -118,18 +116,14 @@ int main (int argc, char *argv[])
 			printf("Error opening %s\n",pBuffer);
 			return 1;
 		}
-
 		for(int iLine=0; iLine<4; iLine++)
 		{
 			fgets(pBuffer, sizeof(pBuffer), pFile); // skip top lines
 		}
-
 		fscanf(pFile, "%I64u", &iNumGraphs);
 		printf("task %d: %I64u graphs\n",iTask + 1,iNumGraphs);
 		iTotalGraphs += iNumGraphs;
 	}
-
 	printf("%I64u total graphs generated\n",iTotalGraphs);
-
 	return 0;
 }

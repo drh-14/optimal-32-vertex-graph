@@ -85,39 +85,35 @@ void CallGenReg(int iNodes, int iDegree, int iGirth, int iTask, int iNumTasks)
 int main (int argc, char *argv[])
 {
 	// first parse command line an set up program parameters
-	if(argc<5)
-	{
+	if(argc < 5){
 		printf("Error: at least 4 arguments needed (nodes degree girth tasks [threads])\n");
 		return 1;
 	}
 
-	int iNodes=atoi(argv[1]), iDegree=atoi(argv[2]), iGirth=atoi(argv[3]);
-	int iNumTasks=atoi(argv[4]), iTask;
-	int iNumThreads= argc>5 ? atoi(argv[5]) : omp_get_max_threads(); // the latter returns the number of cores
+	int iNodes = atoi(argv[1]), iDegree=atoi(argv[2]), iGirth=atoi(argv[3]);
+	int iNumTasks = atoi(argv[4]), iTask;
+	int iNumThreads = argc > 5 ? atoi(argv[5]) : omp_get_max_threads(); // the latter returns the number of cores
 
 	printf("nodes %d degree %d girth %d tasks %d threads %d\n",iNodes,iDegree,iGirth,iNumTasks,iNumThreads);
 
 	// now the parallel processing is initialized and executed
 	omp_set_num_threads(iNumThreads);
 	#pragma omp parallel for schedule(dynamic)
-	for(iTask= 0;iTask<iNumTasks;iTask++)
+	for(iTask = 0; iTask < iNumTasks; iTask++)
 		CallGenReg(iNodes, iDegree, iGirth, iTask, iNumTasks);
 	printf("Completed\n");
 
 	// finally read the result files
 	char pBuffer [BUFSIZE];
 	unsigned long long iNumGraphs, iTotalGraphs = 0;
-	for(iTask=0; iTask<iNumTasks; iTask++)
-	{
+	for(iTask = 0; iTask < iNumTasks; iTask++){
 		sprintf(pBuffer,"%d%d_%d_%d#%d.erg",iNodes/10,iNodes%10,iDegree,3,iTask+1);
 		FILE* pFile=fopen(pBuffer,"r");
-		if(!pFile)
-		{
+		if(!pFile){
 			printf("Error opening %s\n",pBuffer);
 			return 1;
 		}
-		for(int iLine=0; iLine<4; iLine++)
-		{
+		for(int iLine = 0; iLine < 4; iLine++){
 			fgets(pBuffer, sizeof(pBuffer), pFile); // skip top lines
 		}
 		fscanf(pFile, "%I64u", &iNumGraphs);

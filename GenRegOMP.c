@@ -74,7 +74,7 @@ void CallGenReg(int iNodes, int iDegree, int iGirth, int iTask, int iNumTasks)
 
 	// compose the command to call GenReg and print it to the console
 	char pBuffer [BUFSIZE];
-	sprintf(pBuffer,"%s %d %d %d -e -a -m %d %d", pGenRegExe ? pGenRegExe : "GenReg",
+	sprintf(pBuffer,"%s %d %d %d -a -m %d %d", pGenRegExe ? pGenRegExe : "GenReg",
 			iNodes, iDegree, iGirth, iTask+1, iNumTasks);
 	printf("starting %s\n",pBuffer);
 

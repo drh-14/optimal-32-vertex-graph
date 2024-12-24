@@ -3,6 +3,32 @@
 #include <math.h>
 #include "header.h"
 
+
+typedef struct{
+    int data;
+    Node next;
+} Node;
+
+typedef struct{
+    int size;
+    Node head;
+    Node tail;
+} LinkedList;
+
+void append_to_linked_list(LinkedList lst, int x){
+    lst.tail.next = (Node){x, NULL};
+}
+
+void remove_first(LinkedList lst){
+    lst.head = lst.head.next;
+}
+
+
+typedef struct{
+    int *q;
+    int size;
+}Queue;
+
 typedef struct{
     int **adjacency_list;
     int num_vertices;
@@ -64,6 +90,7 @@ int *shortest_path(int source, Graph g){
         }
     }
     int prev[g.num_vertices];
+    prev[source] = NULL;
 
     return 0;
 }

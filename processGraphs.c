@@ -9,6 +9,23 @@ typedef struct{
     int num_edges;
 } Graph;
 
+typedef struct{
+    int heap_type;
+    int size;
+    int *arr;
+}ArrayHeap;
+
+void insert_into_heap(ArrayHeap h, double x){
+
+}
+
+void remove_top(ArrayHeap h){
+    return 0;
+}
+
+void delete_heap(ArrayHeap h){
+    free(h.arr);
+}
 
 Graph build_graph(int num_vertices, int num_edges, int **edge_list){
     int **adjacency_list = malloc(sizeof(int *) * num_vertices);

@@ -1,3 +1,0 @@
-cmake_minimum_required(VERSION 3.10)
-project(Optimal-32-vertex-graph)
-add_executable(exec genreg.c)

@@ -108,6 +108,10 @@ Queue initialize_queue(){
     return (Queue){initialize_linked_list(), 0};
 }
 
+void delete_queue(Queue *q){
+    delete_linked_list(&(q -> lst));
+}
+
 typedef struct{
     LinkedList *adjacency_list;
     int num_vertices;

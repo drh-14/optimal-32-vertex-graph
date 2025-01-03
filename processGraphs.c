@@ -112,60 +112,45 @@ void delete_queue(Queue *q){
     delete_linked_list(&(q -> lst));
 }
 
-typedef struct{
-    LinkedList *adjacency_list;
+typedef struct Graph{
+    Node **adjacency_list;
     int num_vertices;
     int num_edges;
 } Graph;
 
 Graph initialize_graph(int num_vertices, int num_edges, int **edge_list){
-    LinkedList *adjList = malloc(sizeof(LinkedList) * num_vertices);
+    LinkedList **adjacency_list = malloc(num_vertices * sizeof(LinkedList *));
     for(int i = 0; i < num_vertices; i++){
-        adjList[i] = create_linked_list();
+        adjacency_list[i] = initialize_linked_list();
     }
     for(int j = 0; j < num_edges; j++){
         int u = edge_list[j][0];
         int v = edge_list[j][1];
-        append_to_linked_list(adjList[u], v);
-        append_to_linked_list(adjList[v], u);
+        add_last(adjacency_list[u], (Number)v);
+        add_last(adjacency_list[v], (Number)u);
     }
-    return (Graph){adjList, num_vertices, num_edges};
+    return (Graph){adjacency_list, num_vertices, num_edges};
 }
 
-void delete_graph(Graph g){
-    for(int i = 0; i < g.num_vertices; i++){
-        free(g.adjacency_list[i]);
+void delete_graph(Graph *g){
+    for(int i = 0; i < g -> num_vertices; i++){
+        delete_linked_list(g -> adjacency_list[i]);
     }
-    free(g.adjacency_list);
 }
 
 int *shortest_path(int source, Graph g){
     int dist[g.num_vertices];
-    int visited[g.num_vertices];
+    bool visited[g.num_vertices];
     for(int i = 0; i < g.num_vertices; i++){
-        visited[i] = false;
         if(i == source){
             dist[i] = 0;
         }
         else{
             dist[i] = INFINITY;
+            visited[i] = false;
         }
     }
-    int prev[g.num_vertices];
-    prev[source] = NULL;
-    Queue q = initialize_queue();
-    enqueue(q, source);
-    visited[source] = true;
-    while(q.size != 0){
-        int vertex = dequeue(q);
-        Node *curr = g.adjacency_list[vertex].head;
-        while(curr){
-            dist[curr -> data] = min(dist[vertex] + 1, dist[curr -> data]);
-            curr = curr -> next;
-        }
-    }
-
-    return 0;
+   
 }
 
 int average_shortest_path_length(Graph g){

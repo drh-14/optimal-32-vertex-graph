@@ -75,7 +75,9 @@ void add_last(LinkedList *lst, Number x){
 }
 
 void delete_linked_list(LinkedList *lst){
-    
+    while(lst -> size > 0){
+        remove_first(lst);
+    }
 }
 
 typedef struct{

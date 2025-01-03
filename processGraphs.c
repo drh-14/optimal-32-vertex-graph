@@ -2,74 +2,128 @@
 #include <stdlib.h>
 #include <math.h>
 #include "header.h"
+#include <stdbool.h>
 
+typedef union{
+    int a;
+    double b;
+}Number;
 
-typedef struct{
-    int data;
-    Node next;
+typedef struct Node{
+    Number data;
+    Node *next;
 } Node;
 
-typedef struct{
+void delete_node(Node *n){
+    if(n -> next){
+        free(n -> next);
+    }
+    free(n);
+}
+
+typedef struct LinkedList{
     int size;
-    Node head;
-    Node tail;
+    Node *head;
+    Node *tail;
 } LinkedList;
 
-void append_to_linked_list(LinkedList lst, int x){
-    lst.tail.next = (Node){x, NULL};
+LinkedList *initialize_linked_list(){
+    LinkedList *lst = malloc(sizeof(LinkedList));
+    lst -> size = 0;
+    lst -> head = NULL;
+    lst -> tail = NULL;
+    return lst;
 }
 
-void remove_first(LinkedList lst){
-    lst.head = lst.head.next;
+void add_first(LinkedList *lst, Number x){
+    Node *node = malloc(sizeof(Node));
+    node -> data = x;
+    if(lst -> size == 0){
+        node -> next = NULL;
+        lst -> head = node;
+        lst -> tail = node;
+    }
+    else{
+        node -> next = lst -> head;
+        lst -> head = node; 
+    }
+    lst -> size++;
 }
 
+Number remove_first(LinkedList *lst){
+    Number val = lst -> head -> data;
+    Node *n = lst -> head;
+    lst -> head = lst -> head -> next;
+    delete_node(n);
+    lst -> size--;
+    return val;
+}
+
+void add_last(LinkedList *lst, Number x){
+    Node *node = malloc(sizeof(Node));
+    node -> data = x;
+    node -> next = NULL;
+    if(lst -> size == 0){
+        lst -> head = node;
+        lst -> tail = node;
+    }
+    else{
+        lst -> tail -> next = node;
+        lst -> tail = node;
+    }
+    lst -> size++;
+}
+
+void delete_linked_list(LinkedList *lst){
+    
+}
 
 typedef struct{
-    int *q;
+    LinkedList lst;
     int size;
 }Queue;
 
+int size(Queue q){
+    return q.lst.size;
+}
+
+void enqueue(Queue *q, Number x){
+    add_last(&(q -> lst), x);
+    q -> size++;
+}
+
+Number dequeue(Queue *q){
+    Number n = remove_first(&(q -> lst));
+    q -> size--;
+    return n;
+}
+
+int queue_size(Queue q){
+    return q.size;
+}
+
+Queue initialize_queue(){
+    return (Queue){initialize_linked_list(), 0};
+}
+
 typedef struct{
-    int **adjacency_list;
+    LinkedList *adjacency_list;
     int num_vertices;
     int num_edges;
 } Graph;
 
-typedef struct{
-    int heap_type;
-    int size;
-    int *arr;
-}ArrayHeap;
-
-void insert_into_heap(ArrayHeap h, double x){
-
-}
-
-void remove_top(ArrayHeap h){
-    return 0;
-}
-
-void delete_heap(ArrayHeap h){
-    free(h.arr);
-}
-
-Graph build_graph(int num_vertices, int num_edges, int **edge_list){
-    int **adjacency_list = malloc(sizeof(int *) * num_vertices);
-    int current_index[num_vertices];
+Graph initialize_graph(int num_vertices, int num_edges, int **edge_list){
+    LinkedList *adjList = malloc(sizeof(LinkedList) * num_vertices);
     for(int i = 0; i < num_vertices; i++){
-        current_index[i] = 0;
+        adjList[i] = create_linked_list();
     }
-    for(int i = 0; i < num_edges; i++){
-        int u = edge_list[i][0];
-        int v = edge_list[i][1];
-        current_index[u]++;
-        current_index[v]++;
-        realloc(adjacency_list[u], current_index[u] * sizeof(int));
-        realloc(adjacency_list[v], current_index[v] * sizeof(int));
-        adjacency_list[u][current_index[u] - 1] = v;
-        adjacency_list[v][current_index[v] - 1] = u;
+    for(int j = 0; j < num_edges; j++){
+        int u = edge_list[j][0];
+        int v = edge_list[j][1];
+        append_to_linked_list(adjList[u], v);
+        append_to_linked_list(adjList[v], u);
     }
-    return (Graph){adjacency_list, num_vertices, num_edges};
+    return (Graph){adjList, num_vertices, num_edges};
 }
 
 void delete_graph(Graph g){
@@ -81,7 +135,9 @@ void delete_graph(Graph g){
 
 int *shortest_path(int source, Graph g){
     int dist[g.num_vertices];
+    int visited[g.num_vertices];
     for(int i = 0; i < g.num_vertices; i++){
+        visited[i] = false;
         if(i == source){
             dist[i] = 0;
         }
@@ -91,6 +147,17 @@ int *shortest_path(int source, Graph g){
     }
     int prev[g.num_vertices];
     prev[source] = NULL;
+    Queue q = initialize_queue();
+    enqueue(q, source);
+    visited[source] = true;
+    while(q.size != 0){
+        int vertex = dequeue(q);
+        Node *curr = g.adjacency_list[vertex].head;
+        while(curr){
+            dist[curr -> data] = min(dist[vertex] + 1, dist[curr -> data]);
+            curr = curr -> next;
+        }
+    }
 
     return 0;
 }

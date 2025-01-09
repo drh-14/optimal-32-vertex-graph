@@ -9,6 +9,7 @@ typedef struct Node{
     Node *next;
 } Node;
 
+
 Node *create_node(int n){
     Node *node = malloc(sizeof(Node));
     node -> data = n;
@@ -103,8 +104,15 @@ typedef struct Graph{
     int num_edges;
 } Graph;
 
-Graph initialize_graph(int num_vertices, int num_edges, int **edge_list){
-    return;
+Graph create_graph(int num_vertices, int num_edges, int **edge_list){
+    Node **adjacency_list = malloc(num_vertices * sizeof(Node *));
+    for(int i = 0; i < num_edges; i++){
+        int u = edge_list[i][0];
+        int v = edge_list[i][1];
+        add_last(adjacency_list[u], v);
+        add_last(adjacency_list[v], u);
+    }
+    return (Graph){adjacency_list, num_vertices, num_edges};
 }
 
 void delete_graph(Graph *g){
@@ -127,7 +135,19 @@ int *shortest_path(int source, Graph g){
     }
     Queue q = create_queue();
     enqueue(&q, source);
-   
+    while(q.size > 0){
+        int vertex = dequeue(&q);
+        Node *h = g.adjacency_list[vertex];
+        Node *curr = h;
+        while(curr){
+            if(visited[curr -> data] == false){
+                dist[curr -> data] = min(dist[curr -> data], dist[vertex] + 1);
+                visited[curr -> data] = true;
+            }
+            curr = curr -> next;
+        }
+    }
+    return dist;
 }
 
 int average_shortest_path_length(Graph g){
@@ -143,9 +163,6 @@ double top(ArrayHeap h){
     return h.arr[0];
 }
 
-ArrayHeap *create_heap(){
-    ArrayHeap *h = malloc(sizeof(ArrayHeap));
-    h -> arr = NULL;
-    h -> size = 0;
-    return h;
+ArrayHeap create_heap(){
+    return (ArrayHeap){NULL, 0};
 }

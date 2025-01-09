@@ -4,15 +4,17 @@
 #include "header.h"
 #include <stdbool.h>
 
-typedef union{
-    int a;
-    double b;
-}Number;
-
 typedef struct Node{
-    Number data;
+    int data;
     Node *next;
 } Node;
+
+Node *create_node(int n){
+    Node *node = malloc(sizeof(Node));
+    node -> data = n;
+    node -> next = NULL;
+    return node;
+}
 
 void delete_node(Node *n){
     if(n -> next){
@@ -21,95 +23,78 @@ void delete_node(Node *n){
     free(n);
 }
 
-typedef struct LinkedList{
-    int size;
-    Node *head;
-    Node *tail;
-} LinkedList;
-
-LinkedList *initialize_linked_list(){
-    LinkedList *lst = malloc(sizeof(LinkedList));
-    lst -> size = 0;
-    lst -> head = NULL;
-    lst -> tail = NULL;
-    return lst;
+void add_first(Node *head, int n){
+    Node *new_head = create_node(n);
+    Node *temp = head;
+    head = new_head;
+    head -> next = temp;
 }
 
-void add_first(LinkedList *lst, Number x){
-    Node *node = malloc(sizeof(Node));
-    node -> data = x;
-    if(lst -> size == 0){
-        node -> next = NULL;
-        lst -> head = node;
-        lst -> tail = node;
+void add_last(Node *head, int n){
+    if(!head){
+        head = create_node(n);
     }
     else{
-        node -> next = lst -> head;
-        lst -> head = node; 
+
+    Node *curr = head;
+    while(head -> next){
+        curr = curr -> next;
     }
-    lst -> size++;
+    curr -> next = create_node(n);
+    }
 }
 
-Number remove_first(LinkedList *lst){
-    Number val = lst -> head -> data;
-    Node *n = lst -> head;
-    lst -> head = lst -> head -> next;
-    delete_node(n);
-    lst -> size--;
+int remove_first(Node *head){
+    Node *temp = head;
+    head = head -> next;
+    delete_node(temp);
+}
+
+int remove_last(Node *head){
+    Node *curr = head;
+    while(curr -> next){
+        curr = curr -> next;
+    }
+    int val = curr -> data;
+    delete_node(curr);
     return val;
 }
 
-void add_last(LinkedList *lst, Number x){
-    Node *node = malloc(sizeof(Node));
-    node -> data = x;
-    node -> next = NULL;
-    if(lst -> size == 0){
-        lst -> head = node;
-        lst -> tail = node;
-    }
-    else{
-        lst -> tail -> next = node;
-        lst -> tail = node;
-    }
-    lst -> size++;
-}
 
-void delete_linked_list(LinkedList *lst){
-    while(lst -> size > 0){
-        remove_first(lst);
+void delete_linked_list(Node *head){
+    while(head){
+        Node *temp = head;
+        head = head -> next;
+        delete_node(temp);
     }
 }
 
 typedef struct{
-    LinkedList lst;
+    Node *head;
     int size;
 }Queue;
 
 int size(Queue q){
-    return q.lst.size;
+    return q.size;
 }
 
-void enqueue(Queue *q, Number x){
-    add_last(&(q -> lst), x);
+void enqueue(Queue *q, int n){
+    add_last(q -> head, n);
     q -> size++;
 }
 
-Number dequeue(Queue *q){
-    Number n = remove_first(&(q -> lst));
+int dequeue(Queue *q){
+    int n = remove_first(q -> head);
     q -> size--;
     return n;
 }
 
-int queue_size(Queue q){
-    return q.size;
-}
-
-Queue initialize_queue(){
-    return (Queue){initialize_linked_list(), 0};
+Queue create_queue(){
+    return (Queue){NULL, 0};
 }
 
 void delete_queue(Queue *q){
-    delete_linked_list(&(q -> lst));
+    delete_linked_list(q -> head);
 }
 
 typedef struct Graph{
@@ -119,17 +104,7 @@ typedef struct Graph{
 } Graph;
 
 Graph initialize_graph(int num_vertices, int num_edges, int **edge_list){
-    LinkedList **adjacency_list = malloc(num_vertices * sizeof(LinkedList *));
-    for(int i = 0; i < num_vertices; i++){
-        adjacency_list[i] = initialize_linked_list();
-    }
-    for(int j = 0; j < num_edges; j++){
-        int u = edge_list[j][0];
-        int v = edge_list[j][1];
-        add_last(adjacency_list[u], (Number)v);
-        add_last(adjacency_list[v], (Number)u);
-    }
-    return (Graph){adjacency_list, num_vertices, num_edges};
+    return;
 }
 
 void delete_graph(Graph *g){
@@ -150,9 +125,27 @@ int *shortest_path(int source, Graph g){
             visited[i] = false;
         }
     }
+    Queue q = create_queue();
+    enqueue(&q, source);
    
 }
 
 int average_shortest_path_length(Graph g){
     return 0;
+}
+
+typedef struct ArrayHeap{
+    double *arr;
+    int size;
+}ArrayHeap;
+
+double top(ArrayHeap h){
+    return h.arr[0];
+}
+
+ArrayHeap *create_heap(){
+    ArrayHeap *h = malloc(sizeof(ArrayHeap));
+    h -> arr = NULL;
+    h -> size = 0;
+    return h;
 }

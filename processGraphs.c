@@ -61,7 +61,6 @@ int remove_last(Node *head){
     return val;
 }
 
-
 void delete_linked_list(Node *head){
     while(head){
         Node *temp = head;
@@ -157,12 +156,39 @@ int average_shortest_path_length(Graph g){
 typedef struct ArrayHeap{
     double *arr;
     int size;
+    int heap_type; // 0 if min heap, 1 if max heap
 }ArrayHeap;
+
+int heap_size(ArrayHeap h){
+    return h.size;
+}
 
 double top(ArrayHeap h){
     return h.arr[0];
 }
 
-ArrayHeap create_heap(){
-    return (ArrayHeap){NULL, 0};
+ArrayHeap create_heap(int heap_type){
+    return (ArrayHeap){NULL, heap_type};
+}
+
+void heapify(double *arr){
+   
+}
+
+void heap_push(ArrayHeap h, double x){
+    h.size++;
+    h.arr = malloc(h.size * sizeof(double));
+    h.arr[h.size - 1] = x;
+    heapify(h.arr);
+}
+
+double heap_pop(ArrayHeap h){
+    double val = top(h);
+    for(int i = 1; i < h.size; i++){
+        h.arr[i - 1] = h.arr[i];
+    }
+    heapify(h.arr);
+    h.size--;
+    h.arr = malloc(h.size * sizeof(double));
+    return val;
 }

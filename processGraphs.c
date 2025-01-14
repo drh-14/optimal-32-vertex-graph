@@ -171,15 +171,36 @@ ArrayHeap create_heap(int heap_type){
     return (ArrayHeap){NULL, heap_type};
 }
 
-void heapify(double *arr){
-   
+void heapify(double *arr, int heap_type, int length, int i){
+    int minOrMax = i;
+    int left = 2 * i + 1;
+    int right = 2 * i + 2;
+    if(left < length){
+        if(heap_type == 0){
+            if(arr[left] < arr[minOrMax]){
+                minOrMax = left;
+            }
+            if(arr[right] < arr[minOrMax]){
+                minOrMax = right;
+            }
+        }
+        else{
+            if(arr[left] > arr[minOrMax]){
+                minOrMax = left;
+            }
+            if(arr[right] > arr[minOrMax]){
+                minOrMax = right;
+            }
+        }
+    }
+    heapify(arr, heap_type, length, minOrMax);
 }
 
 void heap_push(ArrayHeap h, double x){
     h.size++;
     h.arr = malloc(h.size * sizeof(double));
     h.arr[h.size - 1] = x;
-    heapify(h.arr);
+    heapify(h.arr, h.heap_type, h.size, 0);
 }
 
 double heap_pop(ArrayHeap h){
@@ -187,7 +208,7 @@ double heap_pop(ArrayHeap h){
     for(int i = 1; i < h.size; i++){
         h.arr[i - 1] = h.arr[i];
     }
-    heapify(h.arr);
+    heapify(h.arr, h.heap_type, h.size, 0);
     h.size--;
     h.arr = malloc(h.size * sizeof(double));
     return val;

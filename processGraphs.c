@@ -150,7 +150,14 @@ int *shortest_path(int source, Graph g){
 }
 
 int average_shortest_path_length(Graph g){
-    return 0;
+    double ASPL = 0;
+    for(int i = 0; i < g.num_vertices; i++){
+        double *distances = shortest_path(i, g);
+        for(int j = 0; j < g.num_vertices; j++){
+            ASPL += (distances[j] / 2.0);
+        }
+    }
+    return (int)ASPL;
 }
 
 typedef struct ArrayHeap{

@@ -1,4 +1,5 @@
 #include "gendef.h"
+#include "header.h"
 
 static int n, k, t, mid_max, splitlevel;
 static unsigned long to_store, to_print, count;
@@ -83,19 +84,18 @@ static void neighbor_list(){
 static void compressToFile(){
 	SCHAR i,j,c;
 	SCHAR *store;
-	store=g[0];
+	store = g[0];
 
-	for(i=f1;i<f0;i++)
-		store[i]=2;
-	for(i=f0;i<=n;i++)
-		store[i]=1;
+	for(i = f1;i < f0;i++)
+		store[i] = 2;
+	for(i = f0;i <= n;i++)
+		store[i] = 1;
 
-	for(i=f1;i<=n;i++)
-		for(j=store[i];j<=k;j++)
-		{
-		c=l[i][j];
-		store[c]++;
-		putc(c,lstfile);
+	for(i = f1;i <= n;i++)
+		for(j = store[i];j <= k;j++){
+		  c = l[i][j];
+		  store[c]++;
+		  putc(c, lstfile);
 		}
 }
 
@@ -126,6 +126,7 @@ static void compressToFile(){
  girthStart determines the girth and returns it or 0 if node 3 does not lie on the first girth circle.
  It is only called when the first cycle has just been closed.
 */
+
 static int girthStart(){  // girth refers to the length of the shortest cycle in a graph
  int tw = 2,last = 1,now = 2,next;
  while(now != 3){
@@ -1039,29 +1040,26 @@ unsigned long *_anz;
      lgrad[j]++;
     }
 
- for(i=2;i<=in;i++)
-    {
+ for(i = 2;i <= in;i++){
      semiverf(i-1);
-     for(h=1;h<k;h++)
-	{
-	 l[i][++grad[i]]=j;
-	 l[j][++grad[j]]=i;
-	 g[i][j]=g[j][i]=1;
-	 lgrad[j++]++;
-	}
-     ones[i][part[i][0]]=k-1;
+     for(h=1;h<k;h++){
+	   l[i][++grad[i]] = j;
+	   l[j][++grad[j]] = i;
+	   g[i][j]=g[j][i] = 1;
+	   lgrad[j++]++;
+	  }
+    ones[i][part[i][0]]=k-1;
     }
 
  f_1 = i; f_0 = j;
  m=(--j);--i;
 
- if(girth_exact)
-   {
+ if(girth_exact){
     semiverf(i);
-    i=in+1;j=in+zu+1;h=1;
-    l[i][++grad[i]]=j;
-    l[j][++grad[j]]=i;
-    g[i][j]=g[j][i]=1;
+    i = in+1;j = in+zu+1;h = 1;
+    l[i][++grad[i]] = j;
+    l[j][++grad[j]] = i;
+    g[i][j]=g[j][i] = 1;
     lgrad[j]++;
     while(part[i][h]!=j)h++;
     ones[i][h]++;

@@ -9,7 +9,6 @@ typedef struct Node{
     Node *next;
 } Node;
 
-
 Node *create_node(int n){
     Node *node = malloc(sizeof(Node));
     node -> data = n;
@@ -18,47 +17,45 @@ Node *create_node(int n){
 }
 
 void delete_node(Node *n){
-    if(n -> next){
-        free(n -> next);
-    }
+    free(n -> next);
     free(n);
 }
 
-void add_first(Node *head, int n){
-    Node *new_head = create_node(n);
-    Node *temp = head;
-    head = new_head;
-    head -> next = temp;
+typedef struct LinkedList{
+    Node *head;
+    Node *tail;
+    int size;
+}LinkedList;
+
+LinkedList *create_linked_list(){
+    LinkedList *lst = malloc(sizeof(LinkedList));
+    lst -> head = NULL;
+    lst -> tail = NULL;
+    lst -> size = 0;
+    return lst;
 }
 
-void add_last(Node *head, int n){
-    if(!head){
-        head = create_node(n);
+void append_to_linked_list(LinkedList *lst, int x){
+    if(lst -> size == 0){
+        lst -> head = create_node(x);
     }
     else{
-
-    Node *curr = head;
-    while(head -> next){
-        curr = curr -> next;
+        lst -> tail -> next = create_node(x);
+        lst -> tail = lst -> tail -> next;
     }
-    curr -> next = create_node(n);
-    }
+    lst -> size++;
 }
 
-int remove_first(Node *head){
-    Node *temp = head;
-    head = head -> next;
+int remove_first_from_linked_list(LinkedList *lst){
+    Node *temp = lst -> head;
+    lst -> head = lst -> head -> next;
+    int x = temp -> data;
     delete_node(temp);
+    return x;
 }
 
-int remove_last(Node *head){
-    Node *curr = head;
-    while(curr -> next){
-        curr = curr -> next;
-    }
-    int val = curr -> data;
-    delete_node(curr);
-    return val;
+int linked_list_size(LinkedList *lst){
+    return lst -> size;
 }
 
 void delete_linked_list(Node *head){
@@ -70,48 +67,56 @@ void delete_linked_list(Node *head){
 }
 
 typedef struct{
-    Node *head;
+    LinkedList *lst;
     int size;
 }Queue;
 
-int size(Queue q){
-    return q.size;
+Queue *create_queue(){
+    Queue *q = malloc(sizeof(Queue));
+    q -> lst = NULL;
+    q -> size = 0;
+    return q;
+}
+
+int queue_size(Queue *q){
+    return q -> size;
 }
 
 void enqueue(Queue *q, int n){
-    add_last(q -> head, n);
+    append_to_linked_list(q -> lst, n);
     q -> size++;
 }
 
 int dequeue(Queue *q){
-    int n = remove_first(q -> head);
+    int n = remove_first_from_linked_list(q -> lst);
     q -> size--;
     return n;
 }
 
-Queue create_queue(){
-    return (Queue){NULL, 0};
-}
-
 void delete_queue(Queue *q){
-    delete_linked_list(q -> head);
+    delete_linked_list(q -> lst);
 }
 
 typedef struct Graph{
     Node **adjacency_list;
     int num_vertices;
-    int num_edges;
 } Graph;
 
-Graph create_graph(int num_vertices, int num_edges, int **edge_list){
-    Node **adjacency_list = malloc(num_vertices * sizeof(Node *));
-    for(int i = 0; i < num_edges; i++){
-        int u = edge_list[i][0];
-        int v = edge_list[i][1];
-        add_last(adjacency_list[u], v);
-        add_last(adjacency_list[v], u);
+Graph *create_graph(int num_vertices){
+    Graph *g = malloc(sizeof(Graph));
+    g -> adjacency_list = malloc(num_vertices * sizeof(Node *));
+    g -> num_vertices = num_vertices;
+    for(int i = 0; i < num_vertices; i++){
+        g -> adjacency_list[i] = NULL;
     }
-    return (Graph){adjacency_list, num_vertices, num_edges};
+    return g;
+}
+
+void add_edge(Graph *g, int edge[1][2]){
+    int u = edge[0][0];
+    int v = edge[0][1];
+    append_to_linked_list(g -> adjacency_list[u], v);
+    append_to_linked_list(g -> adjacency_list[v], u);
 }
 
 void delete_graph(Graph *g){
@@ -132,9 +137,9 @@ int *shortest_path(int source, Graph g){
             visited[i] = false;
         }
     }
-    Queue q = create_queue();
-    enqueue(&q, source);
-    while(q.size > 0){
+    Queue *q = create_queue();
+    enqueue(q, source);
+    while(q -> size > 0){
         int vertex = dequeue(&q);
         Node *h = g.adjacency_list[vertex];
         Node *curr = h;

@@ -53,6 +53,8 @@ int front_peek(Queue* q) {
     return q->items[q->front + 1];
 }
 
+
+
 void perform_job(int job_id) {
     // Simulate some job processing (could call another .c file here)
     printf("Processing job %d\n", job_id);
@@ -65,56 +67,58 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);   
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank); 
 
-    int worker_availability[size];
-
-    for(int i=0;i<size;i++){
-        worker_availability[i] = 1; // 1 means able to work
-    }
-
     Queue jobs;
     initializeQueue(&jobs);
-    
-    // Initialize job list (you can dynamically assign jobs here)
+
+    // Populate job queue with job IDs (0 to TOTAL_JOBS - 1)
     for (int i = 0; i < TOTAL_JOBS; i++) {
         enqueue(&jobs, i);
     }
 
-    // Master Node (rank 0) handles job distribution
-    if (myrank == 0) {
-        while(isEmpty(&jobs)){
-            // Initial Spread of Jobs to All Workers
-            for (int i = 1; i < size; i++) {
-                if (!isEmpty(&jobs)) {
-                    int job_id = front_peek(&jobs);
-                    MPI_Isend(&job_id, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_REQUEST_NULL);
-                    worker_availability[i] = 0; // 0 to indicate working status of this node
-                    dequeue(&jobs); // Dequeue the job after sending
+    if (myrank == 0) {  // Master process (rank 0) manages job distribution
+        int worker_availability[size];  
+        for (int i = 1; i < size; i++) worker_availability[i] = 1;  // Mark all workers as available
+
+        while (!isEmpty(&jobs)) {  // Continue assigning jobs while the queue is not empty
+            // Assign jobs to available workers
+            for (int i = 1; i < size; i++) {  
+                if (worker_availability[i] == 1 && !isEmpty(&jobs)) {  
+                    int job_id = front_peek(&jobs);  // Get next job from queue
+                    MPI_Send(&job_id, 1, MPI_INT, i, 0, MPI_COMM_WORLD);  // Assign job to worker i
+                    worker_availability[i] = 0;  // Mark worker as busy
+                    dequeue(&jobs);  // Remove assigned job from queue
                 }
             }
 
-            // Wait for workers to complete their jobs and send back a completion signal
+            MPI_Status status;
+            int completed_job;
+            int flag;
+
+            // Check if any worker has completed their job
             for (int i = 1; i < size; i++) {
-                int result;
-                MPI_Recv(&result, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                worker_availability[i] = 1; // Change to 1, able to work
+                MPI_Iprobe(i, 1, MPI_COMM_WORLD, &flag, &status);  // Check if worker i has sent completion signal
+                if (flag) {  
+                    MPI_Recv(&completed_job, 1, MPI_INT, i, 1, MPI_COMM_WORLD, &status);  // Receive completion message
+                    worker_availability[i] = 1;  // Mark worker as available
+                }
             }
         }
-    }
+
+        // Once all jobs are completed, send termination signals to all workers
+        int stop_signal = -1;
+        for (int i = 1; i < size; i++) {
+            MPI_Send(&stop_signal, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+        }
+    } 
     
-    // Worker Nodes (rank > 0) process jobs
-    else {
+    else {  // Worker processes (rank > 0) execute assigned jobs
         int job_id;
-        
-        // Workers keep receiving jobs and reporting back completion
         while (1) {
-            MPI_Recv(&job_id, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            if (job_id == -1) {  // If -1 is received, stop processing (no more jobs)
-                break;
-            }
-            perform_job(job_id);  // Simulate job processing
-            
-            // Send a signal back to the master indicating job completion
-            MPI_Isend(&job_id, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_REQUEST_NULL);
+            MPI_Recv(&job_id, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  // Receive job from master
+            if (job_id == -1) break;  // Exit loop if termination signal is received
+
+            perform_job(job_id);  // Execute assigned job
+            MPI_Send(&job_id, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);  // Notify master that job is complete
         }
     }
 

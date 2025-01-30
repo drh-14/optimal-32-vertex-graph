@@ -65,6 +65,12 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);   
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank); 
 
+    int worker_availability[size];
+
+    for(int i=0;i<size;i++){
+        worker_availability[i] = 1; // 1 means able to work
+    }
+
     Queue jobs;
     initializeQueue(&jobs);
     
@@ -75,22 +81,26 @@ int main(int argc, char *argv[]) {
 
     // Master Node (rank 0) handles job distribution
     if (myrank == 0) {
-        // Initial Spread of Jobs to All Workers
-        for (int i = 1; i < size; i++) {
-            if (!isEmpty(&jobs)) {
-                int job_id = front_peek(&jobs);
-                MPI_Isend(&job_id, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_REQUEST_NULL);
-                dequeue(&jobs); // Dequeue the job after sending
+        while(isEmpty(&jobs)){
+            // Initial Spread of Jobs to All Workers
+            for (int i = 1; i < size; i++) {
+                if (!isEmpty(&jobs)) {
+                    int job_id = front_peek(&jobs);
+                    MPI_Isend(&job_id, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_REQUEST_NULL);
+                    worker_availability[i] = 0; // 0 to indicate working status of this node
+                    dequeue(&jobs); // Dequeue the job after sending
+                }
+            }
+
+            // Wait for workers to complete their jobs and send back a completion signal
+            for (int i = 1; i < size; i++) {
+                int result;
+                MPI_Recv(&result, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                worker_availability[i] = 1; // Change to 1, able to work
             }
         }
-
-        // Wait for workers to complete their jobs and send back a completion signal
-        for (int i = 1; i < size; i++) {
-            int result;
-            MPI_Recv(&result, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            printf("Worker %d finished job %d\n", i, result);
-        }
     }
+    
     // Worker Nodes (rank > 0) process jobs
     else {
         int job_id;

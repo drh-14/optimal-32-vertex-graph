@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "header.h"
 #include <stdbool.h>
 
 typedef struct Node{
@@ -58,10 +57,10 @@ int linked_list_size(LinkedList *lst){
     return lst -> size;
 }
 
-void delete_linked_list(Node *head){
-    while(head){
-        Node *temp = head;
-        head = head -> next;
+void delete_linked_list(LinkedList *lst){
+    while(lst -> head){
+        Node *temp = lst -> head;
+        lst -> head =  lst -> head -> next;
         delete_node(temp);
     }
 }
@@ -125,10 +124,10 @@ void delete_graph(Graph *g){
     }
 }
 
-int *shortest_path(int source, Graph g){
-    int dist[g.num_vertices];
-    bool visited[g.num_vertices];
-    for(int i = 0; i < g.num_vertices; i++){
+int *shortest_path(int source, Graph *g){
+    int dist[g -> num_vertices];
+    bool visited[g -> num_vertices];
+    for(int i = 0; i < g -> num_vertices; i++){
         if(i == source){
             dist[i] = 0;
         }
@@ -141,7 +140,7 @@ int *shortest_path(int source, Graph g){
     enqueue(q, source);
     while(q -> size > 0){
         int vertex = dequeue(&q);
-        Node *h = g.adjacency_list[vertex];
+        Node *h = g -> adjacency_list[vertex];
         Node *curr = h;
         while(curr){
             if(visited[curr -> data] == false){
@@ -154,74 +153,67 @@ int *shortest_path(int source, Graph g){
     return dist;
 }
 
-int average_shortest_path_length(Graph g){
+int average_shortest_path_length(Graph *g){
     double ASPL = 0;
-    for(int i = 0; i < g.num_vertices; i++){
+    for(int i = 0; i < g -> num_vertices; i++){
         double *distances = shortest_path(i, g);
-        for(int j = 0; j < g.num_vertices; j++){
+        for(int j = 0; j < g -> num_vertices; j++){
             ASPL += (distances[j] / 2.0);
         }
     }
     return (int)ASPL;
 }
 
-typedef struct ArrayHeap{
-    double *arr;
-    int size;
-    int heap_type; // 0 if min heap, 1 if max heap
-}ArrayHeap;
+typedef struct SkipNode{
+    int value;
+    int height;
+    SkipNode **successors;
+}SkipNode;
 
-int heap_size(ArrayHeap h){
-    return h.size;
-}
-
-double top(ArrayHeap h){
-    return h.arr[0];
-}
-
-ArrayHeap create_heap(int heap_type){
-    return (ArrayHeap){NULL, heap_type};
-}
-
-void heapify(double *arr, int heap_type, int length, int i){
-    int minOrMax = i;
-    int left = 2 * i + 1;
-    int right = 2 * i + 2;
-    if(left < length){
-        if(heap_type == 0){
-            if(arr[left] < arr[minOrMax]){
-                minOrMax = left;
-            }
-            if(arr[right] < arr[minOrMax]){
-                minOrMax = right;
-            }
-        }
-        else{
-            if(arr[left] > arr[minOrMax]){
-                minOrMax = left;
-            }
-            if(arr[right] > arr[minOrMax]){
-                minOrMax = right;
-            }
-        }
+SkipNode *create_skip_node(int val, int h){
+    SkipNode *s = malloc(sizeof(SkipNode));
+    s -> value = val;
+    s -> height = h;
+    s -> successors = malloc(h * sizeof(SkipNode *));
+    for(int i = 0; i < h; i++){
+        s -> successors[i] = NULL;
     }
-    heapify(arr, heap_type, length, minOrMax);
+    return s;
 }
 
-void heap_push(ArrayHeap h, double x){
-    h.size++;
-    h.arr = malloc(h.size * sizeof(double));
-    h.arr[h.size - 1] = x;
-    heapify(h.arr, h.heap_type, h.size, 0);
+void delete_skip_node(SkipNode *s){
+    //todo
 }
 
-double heap_pop(ArrayHeap h){
-    double val = top(h);
-    for(int i = 1; i < h.size; i++){
-        h.arr[i - 1] = h.arr[i];
+typedef struct SkipList{
+    int MAX_LEVEL;
+    SkipNode *head;
+}SkipList;
+
+SkipList *create_skip_list(int MAX_LEVEL){
+    SkipList *s = malloc(sizeof(SkipList));
+    s -> MAX_LEVEL = MAX_LEVEL;
+    s -> head = NULL;
+    return s;
+}
+
+
+SkipNode *search_skip_list(SkipList *lst, int k){
+    //todo
+}
+
+void insert_into_skip_list(SkipList *lst, int search_key, int new_value){
+    //todo
+}
+
+void delete_from_skip_list(SkipList *lst, int key){
+    //todo
+}
+
+int random_level(int p, int MAX_LEVEL){
+    int new_level = 1;
+    while(rand() < p){
+        new_level++;
     }
-    heapify(h.arr, h.heap_type, h.size, 0);
-    h.size--;
-    h.arr = malloc(h.size * sizeof(double));
-    return val;
+    return min(new_level, MAX_LEVEL);
 }

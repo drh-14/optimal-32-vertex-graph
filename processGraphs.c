@@ -1,7 +1,10 @@
+#define min(a,b) (a < b ? a : b)
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
+#include <functions.h>
 
 typedef struct Node{
     int data;
@@ -166,43 +169,36 @@ int average_shortest_path_length(Graph *g){
 
 typedef struct SkipNode{
     int value;
-    int height;
-    SkipNode **successors;
+    SkipNode **forward;
 }SkipNode;
 
-SkipNode *create_skip_node(int val, int h){
+SkipNode *create_skip_node(int val, int height){
     SkipNode *s = malloc(sizeof(SkipNode));
     s -> value = val;
-    s -> height = h;
-    s -> successors = malloc(h * sizeof(SkipNode *));
-    for(int i = 0; i < h; i++){
-        s -> successors[i] = NULL;
+    s -> forward = malloc(height * sizeof(SkipNode *));
+    for(int i = 0; i < height; i++){
+        s -> forward[i] = NULL;
     }
     return s;
 }
 
-void delete_skip_node(SkipNode *s){
-    //todo
-}
-
 typedef struct SkipList{
     int MAX_LEVEL;
-    SkipNode *head;
+    SkipNode *header;
 }SkipList;
 
 SkipList *create_skip_list(int MAX_LEVEL){
     SkipList *s = malloc(sizeof(SkipList));
     s -> MAX_LEVEL = MAX_LEVEL;
-    s -> head = NULL;
+    s -> header = create_skip_node(NULL, MAX_LEVEL);
     return s;
 }
 
-
-SkipNode *search_skip_list(SkipList *lst, int k){
+SkipNode *search_skip_list(SkipList *lst, int key){
     //todo
 }
 
-void insert_into_skip_list(SkipList *lst, int search_key, int new_value){
+void insert_into_skip_list(SkipList *lst, int key){
     //todo
 }
 
@@ -210,9 +206,10 @@ void delete_from_skip_list(SkipList *lst, int key){
     //todo
 }
 
-int random_level(int p, int MAX_LEVEL){
+int random_level(float p, int MAX_LEVEL){
+    srand(time(NULL));
     int new_level = 1;
-    while(rand() < p){
+    while((float)rand() / RAND_MAX < p){
         new_level++;
     }
     return min(new_level, MAX_LEVEL);

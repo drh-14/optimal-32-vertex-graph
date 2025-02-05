@@ -214,3 +214,8 @@ int random_level(float p, int MAX_LEVEL){
     }
     return min(new_level, MAX_LEVEL);
 }
+
+typedef struct SkipHeap {
+    SkipList *lst;
+    int type;
+} SkipHeap;

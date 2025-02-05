@@ -54,12 +54,6 @@ int front_peek(Queue* q) {
 }
 
 
-
-void perform_job(int job_id) {
-    // Simulate some job processing (could call another .c file here)
-    printf("Processing job %d\n", job_id);
-}
-
 int main(int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
 
@@ -117,7 +111,12 @@ int main(int argc, char *argv[]) {
             MPI_Recv(&job_id, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);  // Receive job from master
             if (job_id == -1) break;  // Exit loop if termination signal is received
 
-            perform_job(job_id);  // Execute assigned job
+            
+            char command[100];  
+            sprintf(command, "./genreg 32 3 -s -m %d %d", job_id, TOTAL_JOBS);  // Commands from the GENREG Manual (Try on Seawulf)
+            /*genreg n k (n=32 and k =3)*/
+            system(command);
+            
             MPI_Send(&job_id, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);  // Notify master that job is complete
         }
     }

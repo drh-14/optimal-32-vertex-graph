@@ -4,7 +4,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
-#include <functions.h>
+#include "functions.h"
 
 typedef struct Node{
     int data;

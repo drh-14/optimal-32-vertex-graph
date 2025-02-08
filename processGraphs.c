@@ -168,7 +168,8 @@ int average_shortest_path_length(Graph *g){
 }
 
 typedef struct SkipNode{
-    int value;
+    Graph *g;
+    double value;
     SkipNode **forward;
 }SkipNode;
 
@@ -184,6 +185,7 @@ SkipNode *create_skip_node(int val, int height){
 
 typedef struct SkipList{
     int MAX_LEVEL;
+    float p;
     SkipNode *header;
 }SkipList;
 
@@ -199,10 +201,14 @@ SkipNode *search_skip_list(SkipList *lst, int key){
 }
 
 void insert_into_skip_list(SkipList *lst, int key){
-    //todo
+    SkipNode *s = create_skip_node(key, random_level(lst -> p, lst -> MAX_LEVEL));
 }
 
 void delete_from_skip_list(SkipList *lst, int key){
+    //todo
+}
+
+void delete_skip_list(SkipList *lst){
     //todo
 }
 

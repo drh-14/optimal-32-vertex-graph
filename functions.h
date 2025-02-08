@@ -26,4 +26,5 @@ SkipList *create_skip_list(int MAX_LEVEL);
 SkipNode *search_skip_list(SkipList *lst, int key);
 void insert_into_skip_list(SkipList *lst, int key);
 void delete_from_skip_list(SkipList *lst, int key);
+void delete_skip_list(SkipList *lst);
 typedef struct SkipHeap;

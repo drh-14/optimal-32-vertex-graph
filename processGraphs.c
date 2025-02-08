@@ -187,7 +187,7 @@ typedef struct SkipList{
     int MAX_LEVEL;
     float p;
     SkipNode *header;
-}SkipList;
+} SkipList;
 
 SkipList *create_skip_list(int MAX_LEVEL){
     SkipList *s = malloc(sizeof(SkipList));
@@ -197,22 +197,56 @@ SkipList *create_skip_list(int MAX_LEVEL){
 }
 
 SkipNode *search_skip_list(SkipList *lst, int key){
+    SkipNode *s = lst -> header;
+    for(int i = lst -> MAX_LEVEL; i > 0; i--){
+        while(s -> forward[i] -> value < key){
+            s = s -> forward[i];
+
+        }
+    }
+    s = s -> forward[1];
+    if(s -> value == key){
+        return s;
+    }
+    return NULL;
+}
+
+void insert_into_skip_list(SkipList *lst, Graph *g, double key){
     //todo
 }
 
-void insert_into_skip_list(SkipList *lst, int key){
-    SkipNode *s = create_skip_node(key, random_level(lst -> p, lst -> MAX_LEVEL));
-}
-
-void delete_from_skip_list(SkipList *lst, int key){
-    //todo
+void delete_from_skip_list(SkipList *lst, SkipNode *node){
+    SkipNode **update;
+    SkipNode *s = lst -> header;
+    for(int i = lst -> MAX_LEVEL; i > 0; i--){
+        while(s -> forward[i] -> value < node -> value){
+            s = s -> forward[i];
+        }
+        update[i] = s;
+    }
+    s = s -> forward[1];
+    if(s -> value == node -> value){
+        for(int i = 0; i < lst -> MAX_LEVEL; i++){
+            if(update[i] -> forward[i] != s){
+                break;
+            }
+            update[i] -> forward[i] = s -> forward[i];
+        }
+        free(s);
+    }
 }
 
 void delete_skip_list(SkipList *lst){
-    //todo
+    for(int i = 0; i < lst -> MAX_LEVEL; i++){
+        while(lst -> header -> forward[i]){
+            delete_from_skip_list(lst, lst -> header -> forward[i]);
+        }
+    }
+    free(lst -> header);
+    free(lst);
 }
 
-int random_level(float p, int MAX_LEVEL){
+int generate_height(float p, int MAX_LEVEL){
     srand(time(NULL));
     int new_level = 1;
     while((float)rand() / RAND_MAX < p){
@@ -223,5 +257,20 @@ int random_level(float p, int MAX_LEVEL){
 
 typedef struct SkipHeap {
     SkipList *lst;
-    int type;
+    int size;
+    int type; // 0 for min heap, 1 for max heap
 } SkipHeap;
+
+void insert_into_heap(SkipHeap *h, Graph *g, double ASPL){
+    //todo
+    insert_into_skip_list(h -> lst, g, ASPL);
+}
+
+SkipNode *heap_pop(SkipHeap *h){
+    //todo
+
+}
+
+void delete_heap(SkipHeap *h){
+    delete_skip_list(h -> lst);
+}

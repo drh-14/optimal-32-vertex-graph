@@ -1,3 +1,4 @@
+#define min(a,b) (a < b ? a : b)
 typedef struct Node;
 Node *create_node(int n);
 void delete_node(Node *n);
@@ -23,7 +24,6 @@ typedef struct SkipNode;
 SkipNode *create_skip_node(int val, int height);
 typedef struct SkipList;
 SkipList *create_skip_list(int MAX_LEVEL);
-SkipNode *search_skip_list(SkipList *lst, int key);
 void insert_into_skip_list(SkipList *lst, Graph *g, double key);
 void delete_from_skip_list(SkipList *lst, SkipNode *node);
 void delete_skip_list(SkipList *lst);

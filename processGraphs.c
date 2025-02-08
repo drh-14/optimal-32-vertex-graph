@@ -1,4 +1,3 @@
-#define min(a,b) (a < b ? a : b)
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -173,9 +172,10 @@ typedef struct SkipNode{
     SkipNode **forward;
 }SkipNode;
 
-SkipNode *create_skip_node(int val, int height){
+SkipNode *create_skip_node(double key, int MAX_LEVEL){
     SkipNode *s = malloc(sizeof(SkipNode));
-    s -> value = val;
+    int height = generate_height(0.50, MAX_LEVEL);
+    s -> value = key;
     s -> forward = malloc(height * sizeof(SkipNode *));
     for(int i = 0; i < height; i++){
         s -> forward[i] = NULL;
@@ -192,23 +192,8 @@ typedef struct SkipList{
 SkipList *create_skip_list(int MAX_LEVEL){
     SkipList *s = malloc(sizeof(SkipList));
     s -> MAX_LEVEL = MAX_LEVEL;
-    s -> header = create_skip_node(NULL, MAX_LEVEL);
+    s -> header = create_skip_node(NAN, MAX_LEVEL);
     return s;
-}
-
-SkipNode *search_skip_list(SkipList *lst, int key){
-    SkipNode *s = lst -> header;
-    for(int i = lst -> MAX_LEVEL; i > 0; i--){
-        while(s -> forward[i] -> value < key){
-            s = s -> forward[i];
-
-        }
-    }
-    s = s -> forward[1];
-    if(s -> value == key){
-        return s;
-    }
-    return NULL;
 }
 
 void insert_into_skip_list(SkipList *lst, Graph *g, double key){

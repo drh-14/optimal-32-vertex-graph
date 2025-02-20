@@ -1,11 +1,13 @@
-#include <C:\MSMPI\SDK\Include\mpi.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define TOTAL_JOBS 20  // Total number of jobs
+#define JOBS 1000 // Total number of jobs on all machines
+#define START_JOB 1 // Starting job on this machine
+#define TOTAL_JOBS 100  // Total number of jobs on this machine
 #define MAX_SIZE TOTAL_JOBS  // Maximum size of the queue
-#define JOB_ALLOCATION_PERCENTAGE 0.25  // First 25% of jobs pre-assigned
+#define JOB_ALLOCATION_PERCENTAGE 0.25  // First % of jobs pre-assigned, set to 0 for no preassigned jobs
 
 // Defining the Queue structure
 typedef struct {
@@ -56,7 +58,13 @@ int front_peek(Queue* q) {
 
 void perform_job(int rank, int job_id, double time_start) {
     double time_now = MPI_Wtime();
-    printf("At time %.6f, rank %d is processing job %d\n", time_now - time_start, rank, job_id + 1); // + 1 since considering job 1 first task (rank 1 task 1, etc)
+    // printf("At time %.6f, rank %d is processing job %d\n", time_now - time_start, rank, job_id);
+    printf("Rank %d is processing job %d of %d\n", rank, job_id, JOBS);
+
+    //char command[100]; 
+    //sprintf(command, "./genreg 32 3 4 -a -m %d %d", job_id, JOBS);  // Commands from the GENREG Manual (Try on Seawulf)
+    ///*genreg n k m (n=32, k=3 and t=4)*/
+    //system(command);   
 }
 
 int main(int argc, char *argv[]) {
@@ -77,10 +85,8 @@ int main(int argc, char *argv[]) {
 
     // Master core process
     if (myrank == 0) {
-        int job_index = initial_jobs;
-
         // Enqueue the first batch of jobs after the auto-assigned jobs
-        for (int i = initial_jobs; i < TOTAL_JOBS; i++) {
+        for (int i = initial_jobs + START_JOB; i < TOTAL_JOBS; i++) {
             enqueue(&jobs, i);
         }
 
@@ -121,7 +127,7 @@ int main(int argc, char *argv[]) {
     
     // Worker processes (rank > 0) execute assigned jobs
     else {
-        int start_job = (myrank - 1) * jobs_per_worker;
+        int start_job = START_JOB + (myrank - 1) * jobs_per_worker;
         int end_job = start_job + jobs_per_worker;
 
         // Process pre-assigned jobs

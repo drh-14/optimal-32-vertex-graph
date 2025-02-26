@@ -6,6 +6,7 @@
 #include "functions.h"
 #include <pthread.h>
 #include <mpi.h>
+
 typedef struct Node
 {
     int data;
@@ -19,11 +20,13 @@ Node *create_node(int n)
     node->next = NULL;
     return node;
 }
+
 void delete_node(Node *n)
 {
     free(n->next);
     free(n);
 }
+
 
 typedef struct LinkedList
 {
@@ -198,113 +201,4 @@ int average_shortest_path_length(Graph *g)
         }
     }
     return (int)ASPL;
-}
-
-typedef struct SkipNode
-{
-    Graph *g;
-    float value;
-    SkipNode **forward;
-} SkipNode;
-
-SkipNode *create_skip_node(double key, int height, int MAX_LEVEL)
-{
-    SkipNode *s = malloc(sizeof(SkipNode));
-    int height = generate_height(0.50, MAX_LEVEL);
-    s->value = key;
-    s->forward = malloc(sizeof(SkipNode *));
-    for (int i = 0; i < height; i++)
-    {
-        s->forward[i] = malloc(sizeof(SkipNode));
-    }
-    return s;
-}
-
-void lock_node(int comm, int rank, SkipNode *s)
-{
-    MPI_Win window;
-    MPI_Win_create(s, sizeof(s), sizeof(s), MPI_INFO_NULL, comm, &window);
-    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, window);
-}
-
-void unlock_node(int rank, MPI_Win window)
-{
-    MPI_Win_unlock(rank, window);
-    MPI_Win_free(&window);
-}
-
-typedef struct SkipList
-{
-    int MAX_LEVEL;
-    float p;
-    SkipNode *header;
-} SkipList;
-
-SkipList *create_skip_list(int MAX_LEVEL)
-{
-    SkipList *s = malloc(sizeof(SkipList));
-    s->MAX_LEVEL = MAX_LEVEL;
-    s->header = create_skip_node(NAN, MAX_LEVEL, MAX_LEVEL);
-    return s;
-}
-
-void insert_into_skip_list(SkipList *lst, Graph *g, double key)
-{
-    // todo
-}
-
-void delete_from_skip_list(SkipList *lst, SkipNode *node)
-{
-    // todo
-}
-
-void delete_skip_list(SkipList *lst)
-{
-    for (int i = 0; i < lst->MAX_LEVEL; i++)
-    {
-        while (lst->header->forward[i])
-        {
-            delete_from_skip_list(lst, lst->header->forward[i]);
-        }
-    }
-    free(lst->header);
-    free(lst);
-}
-
-void get_lock(SkipNode *s, double search_key, int i)
-{
-    SkipNode *node = s -> forward[i];
-}
-
-int generate_height(float p, int MAX_LEVEL)
-{
-    srand(time(NULL));
-    int new_level = 1;
-    while ((float)rand() / RAND_MAX < p)
-    {
-        new_level++;
-    }
-    return min(new_level, MAX_LEVEL);
-}
-
-typedef struct SkipHeap
-{
-    SkipList *lst;
-    int size;
-    int type; // 0 for min heap, 1 for max heap
-} SkipHeap;
-
-void heap_push(SkipHeap *h, Graph *g, double ASPL)
-{
-    // todo
-}
-
-SkipNode *heap_pop(SkipHeap *h)
-{
-    // todo
-}
-
-void delete_heap(SkipHeap *h)
-{
-    delete_skip_list(h->lst);
 }

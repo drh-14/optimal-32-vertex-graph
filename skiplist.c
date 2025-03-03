@@ -13,6 +13,7 @@ typedef struct SkipNode
     float value;
     SkipNode **forward;
     int height;
+    bool isGarbage;
 } SkipNode;
 
 SkipNode *create_skip_node(double key, int height, int MAX_LEVEL, float p)
@@ -21,6 +22,7 @@ SkipNode *create_skip_node(double key, int height, int MAX_LEVEL, float p)
     int height = generate_height(p, MAX_LEVEL);
     s->height = height;
     s->value = key;
+    s->isGarbage = false;
     s->forward = malloc(sizeof(SkipNode *));
     for (int i = 0; i < height; i++)
     {
@@ -29,7 +31,7 @@ SkipNode *create_skip_node(double key, int height, int MAX_LEVEL, float p)
     return s;
 }
 
-MPI_Win lock_memory(int comm, int rank, void *ptr, size_t size)
+MPI_Win lock_memory(MPI_Comm comm, int rank, void *ptr, size_t size)
 {
     MPI_Win window;
     MPI_Win_create(ptr, size, 1, MPI_INFO_NULL, comm, &window);
@@ -119,29 +121,51 @@ void insert_into_skip_list(int comm, int rank, SkipList *lst, Graph *g, double k
     }
 }
 
-void delete_from_skip_list(SkipList *lst, double key)
+void delete_from_skip_list(MPI_Comm comm, int rank, SkipList *lst, double key)
 {
-    SkipNode *node;
+    SkipNode *y;
     SkipNode *update[lst -> MAX_LEVEL];
-    SkipNode *s = lst -> header;
+    SkipNode *x = lst -> header;
     int L = lst -> level_hint;
     for(int i = L; i > 0; i--){
-        node = s -> forward[i];
-        while(node -> value < key){
-            s = node;
-            node = s -> forward[i];
+        y = x -> forward[i];
+        while(y -> value < key){
+            x = y;
+            y = x -> forward[i];
         }
-        update[i] = s;
+        update[i] = x;
     }
-    node = s;
+    y = x;
     do{
-        node = node -> forward[0];
-        
-    }while(node);
+        y = y -> forward[0];
+        MPI_Win window = lock_memory(comm, rank, y -> height, sizeof(y -> height));
+        bool isGarbage = y -> value > y -> forward[0] -> value;
+        if(isGarbage){
+            unlock_memory(rank, window);
+        }
+    }while(!(y -> value == key && !(y -> value > y -> forward[0] -> value)));
+    for(int i = L + 1; y >= y -> height; i++){
+        update[i] = lst -> header;
+    }
+    for(int i = y -> height; i > 0; i--){
+        x = get_lock(comm, rank, update[i], key, i);
+        MPI_Win window = lock_memory(comm, rank, y -> forward[i], sizeof(SkipNode));
+        x -> forward[i] = y -> forward[i];
+        y -> forward[i] = x;
+        unlock_memory(rank, window);
+    }
+    L = lst -> level_hint;
+    if(L > 1 && !lst -> header -> forward[L]){
+        lock_memory(comm, rank, lst -> level_hint, sizeof(int));
+        while(lst -> level_hint > 1 && !lst -> header -> forward[lst -> level_hint]){
+            lst -> level_hint--;
+        }
+    }
 }
 
 void delete_skip_list(SkipList *lst)
 {
+
     
 }
 

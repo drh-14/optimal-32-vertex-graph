@@ -27,7 +27,6 @@ void delete_node(Node *n)
     free(n);
 }
 
-
 typedef struct LinkedList
 {
     Node *head;

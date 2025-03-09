@@ -23,25 +23,22 @@ typedef struct Graph{
 } Graph;
 
 typedef struct SkipNode{
-    Graph *g;
-    float value;
-    SkipNode **forward;
     int height;
+    float ASPL;
+    Graph *g;
+    SkipNode **forward;
     pthread_mutex_t nodeLock;
     pthread_mutex_t heightLock;
 } SkipNode;
 
-typedef struct SkipList{
-    int MAX_LEVEL;
-    int levelHint;
-    float p;
-    SkipNode *header;
-} SkipList;
 
 typedef struct SkipQueue{
     int type;
     int size;
     SkipList *lst;
+    int MAX_LEVEL;
+    float p;
+    SkipNode *head;
 }SkipQueue;
 
 typedef struct Node Node;
@@ -64,7 +61,7 @@ Graph create_graph(int num_vertices);
 void add_edge(Graph *g, int edge[1][2]);
 void delete_graph(Graph *g);
 int *shortest_path(int source, Graph *g);
-int ASPL(Graph *g);
+float ASPL(Graph *g);
 typedef struct SkipNode SkipNode;
 SkipNode *create_skip_node(double key, int MAX_LEVEL);
 typedef struct SkipList SkipList;

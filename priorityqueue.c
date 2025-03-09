@@ -16,6 +16,16 @@ SkipNode *createSkipNode(int height, int MAX_LEVEL, Graph *g){
     return s;
 }
 
+int randomLevel(float p, int MAX_LEVEL){
+    srand(NULL);
+    int l = 1;
+    while(rand() / RAND_MAX < p){
+        l++;
+    }
+    return min(MAX_LEVEL, l);
+
+}
+
 SkipNode *getLock(SkipNode *node1, float key, int level){
     return NULL;
 }
@@ -39,8 +49,7 @@ void push(SkipQueue *q, Graph *g){
         node2 -> g = g;
         pthread_mutex_unlock(&node1 -> forward[1] -> nodeLock);
     }
-    int level = randomLevel();
-    SkipNode *newNode = createSkipNode(level, q -> MAX_LEVEL, g);
+    SkipNode *newNode = createSkipNode(randomLevel(q -> p, q -> MAX_LEVEL), q -> MAX_LEVEL, g);
     pthread_mutex_lock(&newNode -> nodeLock);
     for(int i = 1; i <= q -> MAX_LEVEL; i++){
         if(i != 1){

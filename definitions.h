@@ -1,4 +1,49 @@
+#include <pthread.h>
 #define min(a,b) (a < b ? a : b)
+
+typedef struct Node{
+    int data;
+    Node *next;
+} Node;
+
+typedef struct LinkedList{
+    Node *head;
+    Node *tail;
+    int size;
+} LinkedList;
+
+typedef struct Queue{
+    LinkedList *lst;
+    int size;
+} Queue;
+
+typedef struct Graph{
+    Node **adjacency_list;
+    int num_vertices;
+} Graph;
+
+typedef struct SkipNode{
+    Graph *g;
+    float value;
+    SkipNode **forward;
+    int height;
+    pthread_mutex_t nodeLock;
+    pthread_mutex_t heightLock;
+} SkipNode;
+
+typedef struct SkipList{
+    int MAX_LEVEL;
+    int levelHint;
+    float p;
+    SkipNode *header;
+} SkipList;
+
+typedef struct SkipQueue{
+    int type;
+    int size;
+    SkipList *lst;
+}SkipQueue;
+
 typedef struct Node Node;
 Node *create_node(int n);
 void delete_node(Node *n);
@@ -19,10 +64,10 @@ Graph create_graph(int num_vertices);
 void add_edge(Graph *g, int edge[1][2]);
 void delete_graph(Graph *g);
 int *shortest_path(int source, Graph *g);
-int average_shortest_path_length(Graph *g);
+int ASPL(Graph *g);
 typedef struct SkipNode SkipNode;
 SkipNode *create_skip_node(double key, int MAX_LEVEL);
-typedef struct SkipList;
+typedef struct SkipList SkipList;
 SkipList *create_skip_list(int MAX_LEVEL);
 void insert_into_skip_list(SkipList *lst, Graph *g, double key);
 void delete_from_skip_list(SkipList *lst, SkipNode *node);

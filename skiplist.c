@@ -3,179 +3,68 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
-#include "functions.h"
+#include "definitions.h"
 #include <pthread.h>
 #include <mpi.h>
 
-typedef struct SkipNode
-{
-    Graph *g;
-    float value;
-    SkipNode **forward;
-    int height;
-    bool isGarbage;
-} SkipNode;
 
-SkipNode *create_skip_node(double key, int height, int MAX_LEVEL, float p)
-{
+SkipNode *createSkipNode(double key, int height, int MAX_LEVEL, float p, Graph *g){
     SkipNode *s = malloc(sizeof(SkipNode));
     int height = generate_height(p, MAX_LEVEL);
-    s->height = height;
-    s->value = key;
-    s->isGarbage = false;
-    s->forward = malloc(sizeof(SkipNode *));
+    s -> height = height;
+    s -> value = key;
+    s -> forward = malloc(sizeof(SkipNode *));
     for (int i = 0; i < height; i++)
     {
         s->forward[i] = malloc(sizeof(SkipNode));
     }
+    s -> nodeLock = PTHREAD_MUTEX_INITIALIZER;
+    s -> heightLock = PTHREAD_MUTEX_INITIALIZER;
     return s;
 }
 
-MPI_Win lock_memory(MPI_Comm comm, int rank, void *ptr, size_t size)
-{
-    MPI_Win window;
-    MPI_Win_create(ptr, size, 1, MPI_INFO_NULL, comm, &window);
-    MPI_Win_lock(MPI_LOCK_EXCLUSIVE, rank, 0, window);
-    return window;
-}
-
-
-void unlock_memory(int rank, MPI_Win window)
-{
-    MPI_Win_unlock(rank, window);
-    MPI_Win_free(&window);
-}
-
-SkipNode *get_lock(int comm, int rank, SkipNode *s, double key, int i){
-    SkipNode *node = s -> forward[i];
-    while(s -> value < key){
-        s = node;
-        node = s -> forward[i];
-    }
-    lock_node(comm, rank, s -> forward[i]);
-    node = s -> forward[i];
-    while(node -> value < key){
-        unlock_node(rank, s -> forward[i]);
-        s = node;
-        lock_node(comm, rank, s -> forward[i]);
-        node = s -> forward[i];
-    }
-    return s;
-}
-
-typedef struct SkipList
-{
-    int MAX_LEVEL;
-    int level_hint;
-    float p;
-    SkipNode *header;
-} SkipList;
-
-SkipList *create_skip_list(int MAX_LEVEL, float p)
-{
+SkipList *createSkipList(int MAX_LEVEL, float p){
     SkipList *s = malloc(sizeof(SkipList));
     s->MAX_LEVEL = MAX_LEVEL;
-    s->level_hint = MAX_LEVEL;
-    s->header = create_skip_node(NAN, MAX_LEVEL, MAX_LEVEL, p);
+    s->levelHint = MAX_LEVEL;
+    s->header = createSkipNode(NAN, MAX_LEVEL, MAX_LEVEL, p, 01);
     return s;
 }
 
-void insert_into_skip_list(int comm, int rank, SkipList *lst, Graph *g, double key)
-{
-    SkipNode *update[lst -> MAX_LEVEL];
-    SkipNode *s = lst -> header;
-    int L = lst -> level_hint;
-    for(int i = L; i > 0; i--){
-        SkipNode *node = s -> forward[i];
-        while(node -> value < key){
-            s = node;
-            node = s -> forward[i];
-            update[i] = s;
-        }
+SkipNode *getLock(SkipNode *node, double key, int level){
+    SkipNode *node2 = node -> forward[level];
+    while(node2 -> value < key){
+        node = node2;
+        node2 = node -> forward[level];
     }
-    s = get_lock(comm, rank, s, key, 1);
-    if(s -> forward[1] -> value == key){
-        unlock_node(rank, &s);
+    pthread_mutex_lock(&node -> heightLock);
+    node2 = node -> forward[level];
+    while(node2 -> value < key){
+        pthread_mutex_unlock(&node -> heightLock);
+        node = node2;
+        lock(&node -> heightLock);
     }
-    SkipNode *node = create_skip_node(key, random_level(), lst -> MAX_LEVEL, lst -> p);
-    lock_field(comm, rank, s -> height);
-    for(int i = L + 1; i > node -> height - 1; i--){
-        update[i] = lst -> header;
-    }
-    for(int i = 1; i <= node -> height; i++){
-        if(i != 1){
-            s = get_lock(comm, rank, update[i], key, i);
-        }
-        node -> forward[i] = s -> forward[i];
-        s -> forward[i] = node;
-        unlock_node(rank, s -> forward[i]);
-    }
-    unlock_node(rank, node -> height);
-    L = lst -> level_hint;
-    if(L < lst -> MAX_LEVEL && lst -> header -> forward[L + 1]){
-        MPI_Win window = lock_memory(comm, rank, &lst -> level_hint, sizeof(lst -> level_hint));
-        while(lst -> level_hint < lst -> MAX_LEVEL && lst -> header -> forward[lst -> level_hint + 1]){
-            lst -> level_hint++;
-        }
-        unlock_memory(rank, window);
-    }
+    return node;
 }
 
-void delete_from_skip_list(MPI_Comm comm, int rank, SkipList *lst, double key)
-{
-    SkipNode *y;
-    SkipNode *update[lst -> MAX_LEVEL];
-    SkipNode *x = lst -> header;
-    int L = lst -> level_hint;
-    for(int i = L; i > 0; i--){
-        y = x -> forward[i];
-        while(y -> value < key){
-            x = y;
-            y = x -> forward[i];
-        }
-        update[i] = x;
+int randomLevel(float p, SkipQueue *s){
+    srand(time(NULL));
+    int l = 1;
+    while ((float)rand() / RAND_MAX < p){
+        l++;
     }
-    y = x;
-    do{
-        y = y -> forward[0];
-        MPI_Win window = lock_memory(comm, rank, y -> height, sizeof(y -> height));
-        bool isGarbage = y -> value > y -> forward[0] -> value;
-        if(isGarbage){
-            unlock_memory(rank, window);
-        }
-    }while(!(y -> value == key && !(y -> value > y -> forward[0] -> value)));
-    for(int i = L + 1; y >= y -> height; i++){
-        update[i] = lst -> header;
-    }
-    for(int i = y -> height; i > 0; i--){
-        x = get_lock(comm, rank, update[i], key, i);
-        MPI_Win window = lock_memory(comm, rank, y -> forward[i], sizeof(SkipNode));
-        x -> forward[i] = y -> forward[i];
-        y -> forward[i] = x;
-        unlock_memory(rank, window);
-    }
-    L = lst -> level_hint;
-    if(L > 1 && !lst -> header -> forward[L]){
-        lock_memory(comm, rank, lst -> level_hint, sizeof(int));
-        while(lst -> level_hint > 1 && !lst -> header -> forward[lst -> level_hint]){
-            lst -> level_hint--;
-        }
-    }
+    return min(l, s -> lst -> MAX_LEVEL);
 }
 
-void delete_skip_list(SkipList *lst)
-{
-
+void insertIntoSkipList(SkipList *lst, double key){
     
 }
 
-int generate_height(float p, int MAX_LEVEL)
-{
-    srand(time(NULL));
-    int new_level = 1;
-    while ((float)rand() / RAND_MAX < p)
-    {
-        new_level++;
-    }
-    return min(new_level, MAX_LEVEL);
+void deleteFromSkipList(SkipList *lst, double key){
+
+}
+
+void deleteSkipList(SkipList *lst){
+
+    
 }

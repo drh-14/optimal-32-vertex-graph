@@ -61,5 +61,3 @@ void push(SkipQueue *q, Graph *g){
     }
     pthread_mutex_unlock(&newNode -> nodeLock);
 }
-
-

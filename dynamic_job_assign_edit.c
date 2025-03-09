@@ -1,4 +1,4 @@
-#include <C:\MSMPI\SDK\Include\mpi.h>
+#include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

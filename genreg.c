@@ -78,49 +78,20 @@ static void neighbor_list(){
  Example: k=3, t=3 -> f1=2, f0=5
           k=3, t=5 -> f1=5, f0=11
 */
-
-#ifndef SHORTCODE
-
-static void compressToFile(){
-	SCHAR i,j,c;
-	SCHAR *store;
-	store = g[0];
-
-	for(i = f1;i < f0;i++)
-		store[i] = 2;
-	for(i = f0;i <= n;i++)
-		store[i] = 1;
-
-	for(i = f1;i <= n;i++)
-		for(j = store[i];j <= k;j++){
-		  c = l[i][j];
-		  store[c]++;
-		  putc(c, lstfile);
-		}
+static void compressToFile() {
+    int i, j;
+    /* Print the graph number (anz holds the count of graphs generated so far) */
+    printf("Graph %lu:\n", anz);
+    for(i = 1; i <= n; i++){
+        printf("%d :", i);
+        for(j = 1; j <= grad[i]; j++){
+            printf(" %d", l[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
-#else
-static void compressToFile(){
- int i, j, c, equ = 1;
- unsigned int h = 0;
- for(i = 1;i <= n;i++)
-     for(j = 1;j <= k;j++){
-	   c=l[i][j];
-	   if(c>i){
-	    if(equ && c != lastcode[++h]){
-	       equ = 0;
-	       putc(h - 1,lstfile);  /* Number of matching edges */
-	       lastcode[h] = c;
-	       putc(c,lstfile);   /* Only for n < 256 */
-	      }
-	    else if(!equ){
-	       lastcode[++h]=c;
-	       putc(c,lstfile);
-	      }
-	   }
-	}
-}
-#endif
 
 /*
  girthStart determines the girth and returns it or 0 if node 3 does not lie on the first girth circle.

@@ -1,1 +1,89 @@
+Dynamic Scheduler (DS) & GENREG Testing Instructions
 
+This document provides instructions to test the Dynamic Scheduler (DS) and GENREG on Seawulf.
+
+1. Import Files
+
+Copy the DS and GENREG files into the Test folder on Seawulf.
+
+2. Build the Executables
+
+Open a terminal in the Test folder and run:
+
+make
+
+This will compile all necessary executables.
+
+3. Load Required Modules
+
+Depending on the node you are using, load the following modules:
+
+For Milan 1 & 2 and XeonMax Nodes:
+
+module load mpich/gcc/3.4.2
+module load gcc/11.2.0
+module load sbatch
+
+For Login1 & Login2 Nodes:
+
+module load mpich/gcc/3.2.1
+module load gcc/10.2.0
+module load sbatch
+
+4. Configure the Slurm Job
+
+Edit the Slurm script DS.slurm to set the desired job parameters. In particular, adjust the start and end job numbers (these are inclusive) and ensure that the total jobs parameter is consistent for all team members (we recommend using 5000).
+
+To edit the file, run:
+
+nano DS.slurm
+
+Make your changes and save the file.
+
+5. Submit the Slurm Job
+
+Once you have configured DS.slurm, submit it with:
+
+sbatch DS.slurm
+
+6. Monitor Job Status
+
+To check the status of your jobs, run:
+
+squeue -u $USER
+
+_____________________________________________________________________________________________________________________________
+
+KEY CHANGES in genreg.c and CSV Merging Strategy
+	1.	ASPL Computation Integration:
+	•	New Function Added:
+A function called compute_aspl(void) was added to the code. This function calculates ASPL for a given graph using the Floyd–Warshall algorithm.
+	2.	Local Best Graph Storage Using Linked List:
+	•	Dynamic Linked List:
+Based on the ASPL computed for each graph, the code now decides whether to “trash” (ignore) or “append” the graph to a local linked list.
+	•	Decision Process:
+	•	When a graph is generated, its ASPL is computed.
+	•	If the ASPL is lower than the current best (minASPL) on that node (with a small tolerance (1e-6) to account for floating-point imprecision), then the node flushes its local list and stores this new graph.
+	•	If the ASPL is equal (within the tolerance) to the current best, the graph is appended to the list.
+	•	Graphs with a higher ASPL than the current best are ignored.
+	•	Output File Naming:
+Once local enumeration is complete, each node writes the adjacency lists of its best graphs into a CSV file. The file is named in the format <i>_<total_job_number>.csv, where <i> is the 1-based partition (or job) number and <total_job_number> is the total number of partitions (jobs) specified.
+	3.	CSV Output and Merging Strategy:
+	•	Separate Output Files:
+Rather than trying to merge all best graphs during enumeration, each node now writes its results to a separate CSV file.
+	•	Post-Processing with Python:
+After all jobs are complete, a Python script (merge.py) is used to merge the individual CSV files into one consolidated CSV file.
+	•	Merging Logic:
+	•	The Python script reads each CSV file (the files are named according to the partition number).
+	•	It parses the ASPL value (found on the second line of each graph block).
+	•	While merging, it only includes graphs if their ASPL is equal to or lower than the current global minimum ASPL.
+	•	This approach avoids complexities and potential bugs that might arise from trying to maintain a global minimum in the distributed environment.
+	•	Efficiency:
+The merging operation is very efficient: batch tests show that merging 5000 CSV files takes only a few minutes, which is negligible compared to the enumeration time.
+  4. Why These Changes?
+	•	Modular & Robust:
+Keeping the CSV output separate and merging them later minimizes the complexity in the distributed enumeration phase. It reduces the risk of errors that might occur if trying to manage a global state across nodes.
+	•	Ease of Debugging:
+With separate output files and a dedicated merging script, it is easier to diagnose issues, as each node’s output is isolated.
+	•	Performance Considerations:
+The post-processing merge is VERY lightweight!

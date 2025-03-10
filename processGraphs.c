@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
-#include <time.h>
 #include "definitions.h"
 #include <pthread.h>
 #include <mpi.h>

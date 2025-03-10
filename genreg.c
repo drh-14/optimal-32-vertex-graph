@@ -1,5 +1,5 @@
 #include "gendef.h"
-#include "functions.h"
+#include "definitions.h"
 
 static int n, k, t, mid_max, splitlevel;
 static unsigned long to_store, to_print, count;
@@ -764,8 +764,6 @@ static void initialize_next_partition(int x) {
 
     nextpart[nextpart[0] + 1] = n + 1;  // Set the final marker for partition end
 }
-
-
 
 /*
  ordrek does the insertion

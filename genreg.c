@@ -1,5 +1,5 @@
 #include "gendef.h"
-#include "functions.h"
+#include "definitions.h"
 
 static int n, k, t, mid_max, splitlevel;
 static unsigned long to_store, to_print, count;

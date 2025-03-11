@@ -21,13 +21,17 @@ Depending on the node you are using, load the following modules:
 For Milan 1 & 2 and XeonMax Nodes:
 
 module load mpich/gcc/3.4.2
+
 module load gcc/11.2.0
+
 module load sbatch
 
 For Login1 & Login2 Nodes:
 
 module load mpich/gcc/3.2.1
+
 module load gcc/10.2.0
+
 module load sbatch
 
 4. Configure the Slurm Job

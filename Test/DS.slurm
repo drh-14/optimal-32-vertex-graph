@@ -8,9 +8,9 @@
 #SBATCH --partition=long-96core-shared  # Change to your cluster's partition if required
 
 # Set DS parameters: process jobs from START_JOB to END_JOB out of TOTAL_JOBS partitions.
-START_JOB=1
-END_JOB=250
-TOTAL_JOBS=5000
+START_JOB=1             # MODIFY ACCORDINGLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+END_JOB=250             # MODIFY ACCORDINGLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+TOTAL_JOBS=300000       # Total 300k jobs: 
 
 echo "Starting DS with jobs ${START_JOB} to ${END_JOB} out of ${TOTAL_JOBS}"
 

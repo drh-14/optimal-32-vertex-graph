@@ -26,9 +26,13 @@ For Login1 & Login2 Nodes:
 
 module load mpich/gcc/3.2.1 gcc/10.2.0 slurm
 
+3.1 Complie DS.c before submitting the job
+
+mpicc -O -o DS DS.c
+
 4. Configure the Slurm Job
 
-Edit the Slurm script DS.slurm to set the desired job parameters. In particular, adjust the start and end job numbers (these are inclusive) and ensure that the total jobs parameter is consistent for all team members (we recommend using 5000).
+Edit the Slurm script DS.slurm to set the desired job parameters. In particular, adjust the start and end job numbers (these are inclusive) and ensure that the total jobs parameter is consistent (300,000k).
 
 To edit the file, run:
 

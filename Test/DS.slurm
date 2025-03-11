@@ -2,7 +2,7 @@
 #SBATCH --job-name=DS_run
 #SBATCH --output=DS_run_%j.out
 #SBATCH --error=DS_run_%j.err
-#SBATCH --nodes=1
+#SBATCH --nodes=2
 #SBATCH --ntasks=96                     # Adjust number of MPI tasks as needed
 #SBATCH --time=168:00:00                 # Adjust time limit as needed (Currently et to Max time for this partition)
 #SBATCH --partition=extended-96core  # Change to your cluster's partition if required

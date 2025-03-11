@@ -4,8 +4,8 @@
 #SBATCH --error=DS_run_%j.err
 #SBATCH --nodes=1
 #SBATCH --ntasks=96                     # Adjust number of MPI tasks as needed
-#SBATCH --time=24:00:00                 # Adjust time limit as needed (Currently et to Max time for this partition)
-#SBATCH --partition=long-96core-shared  # Change to your cluster's partition if required
+#SBATCH --time=168:00:00                 # Adjust time limit as needed (Currently et to Max time for this partition)
+#SBATCH --partition=extended-96core  # Change to your cluster's partition if required
 
 # Set DS parameters: process jobs from START_JOB to END_JOB out of TOTAL_JOBS partitions.
 START_JOB=1             # MODIFY ACCORDINGLY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

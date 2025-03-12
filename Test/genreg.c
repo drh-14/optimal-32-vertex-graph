@@ -26,7 +26,6 @@ typedef struct BestGraph {
 /* Global linked list pointer to the best graphs */
 BestGraph *best_graphs = NULL;
 
-
 static SCHAR n,k,t,mid_max,splitlevel;
 static ULONG tostore,toprint,count;
 static FILE  *ergfile,*lstfile,*autfile;
@@ -40,17 +39,11 @@ static ULONG calls,dez,anz;
 
 static long fpos;
 
-
-
-
 void flush_best_graphs(void);
 void add_best_graph(const char *entry);
 double compute_aspl(void);
 void store_best_graph(void);
 void output_best_graphs_to_csv(void);
-
-
-
 
 void flush_best_graphs(void) {
    BestGraph *cur = best_graphs;
@@ -223,8 +216,6 @@ void store_best_graph(void) {
    /* If aspl > threshold, do nothing */
 }
 
-
-
 void komprtofile() {
    char foldername[100];
    char filename[150];
@@ -271,9 +262,6 @@ void komprtofile() {
 
    fclose(csvFile);
 }
-
-
-
 
 /*
  girthstart ermittelt Taillenweite

@@ -109,42 +109,45 @@ void deleteGraph(Graph *g){
     }
 }
 
-int *shortestPath(int source, Graph *g){
-    int dist[g->num_vertices];
-    bool visited[g->num_vertices];
-    for (int i = 0; i < g->num_vertices; i++){
+int *shortestPath(int source, int n, int degree, int **adjList){
+    int *dist = malloc(sizeof(int) * n);
+    bool visited[n];
+    for (int i = 0; i < n; i++){
         if (i == source){
             dist[i] = 0;
         }
         else{
-            dist[i] = INFINITY;
+            dist[i] = INT32_MAX;
             visited[i] = false;
         }
     }
     Queue *q = create_queue();
     enqueue(q, source);
+    visited[source] = true;
     while (q->size > 0){
-        int vertex = dequeue(&q);
-        Node *h = g->adjacency_list[vertex];
-        Node *curr = h;
-        while (curr){
-            if (visited[curr->data] == false){
-                dist[curr->data] = min(dist[curr->data], dist[vertex] + 1);
-                visited[curr->data] = true;
+        int vertex = dequeue(q);
+        for(int i = 1; i <= degree; i++){
+            if (visited[adjList[vertex][i]] == false){
+                dist[adjList[vertex][i]] = min(dist[adjList[vertex][i]], dist[vertex] + 1);
+                visited[adjList[vertex][i]] = true;
+                enqueue(q, adjList[vertex][i]);
             }
-            curr = curr->next;
         }
     }
     return dist;
 }
 
-float ASPL(Graph *g){
-    double ASPL = 0;
-    for (int i = 0; i < g->num_vertices; i++){
-        double *distances = shortest_path(i, g);
-        for (int j = 0; j < g->num_vertices; j++){
-            ASPL += (distances[j] / 2.0);
+double ASPL(int n, int degree, int **adjList){
+    double totalLength = 0.0;
+    double ASPL = 0.0;
+    int pairs = 0;
+    for (int i = 0; i < n; i++){
+        double *distances = shortest_path(i, n, degree, adjList);
+        for (int j = i + 1; j < n; j++){
+            totalLength += distances[j];
+            pairs++;
         }
+        free(distances);
     }
-    return ASPL;
+    return totalLength / pairs;
 }

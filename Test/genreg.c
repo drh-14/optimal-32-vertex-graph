@@ -119,66 +119,62 @@ static void nachblist()
 }
 
 
-double compute_aspl(void) {
-    int i, j, k;
-    double **dist;
 
-    /* Allocate a (n+1)x(n+1) distance matrix (using 1-based indexing) */
-    dist = (double **) malloc((n + 1) * sizeof(double *));
-    if (!dist) {
-        fprintf(stderr, "Memory allocation error in compute_aspl\n");
-        exit(1);
-    }
-    for (i = 0; i <= n; i++) {
-        dist[i] = (double *) malloc((n + 1) * sizeof(double));
-        if (!dist[i]) {
+// Using BFS (O(n^2) average-case 
+double compute_aspl(void) {
+    int i, j;
+    long totalPairs = 0;      // Counter for the total number of vertex pairs (i < j) => 32*31/2
+    long totalDistance = 0;   // Accumulator for the sum of all shortest path distances
+
+    // Loop over each vertex i as the source for BFS
+    for (i = 1; i <= n; i++) {
+        // Allocate an array to store the distances from vertex i to every other vertex (1-indexed)
+        int *dist = (int *) malloc((n + 1) * sizeof(int));
+        if (!dist) {
             fprintf(stderr, "Memory allocation error in compute_aspl\n");
             exit(1);
         }
-    }
+        // Initialize distances: set all values to -1 (indicating "unvisited")
+        for (j = 1; j <= n; j++)
+            dist[j] = -1;
+        // The distance from vertex i to itself is 0
+        dist[i] = 0;
 
-    /* Initialize distances:
-     *  - 0 on the diagonal.
-     *  - 1 if there is an edge (g[i][j] != 0).
-     *  - A large value for non-adjacent pairs.
-     */
-    for (i = 1; i <= n; i++) {
-        for (j = 1; j <= n; j++) {
-            if (i == j)
-                dist[i][j] = 0.0;
-            else if (g[i][j] != 0)
-                dist[i][j] = 1.0;
-            else
-                dist[i][j] = DBL_MAX / 2;
+        // Allocate a queue for BFS (using an array of ints)
+        int *queue = (int *) malloc((n + 1) * sizeof(int));
+        if (!queue) {
+            fprintf(stderr, "Memory allocation error in compute_aspl (queue)\n");
+            exit(1);
         }
-    }
+        int front = 0, rear = 0;
+        // Enqueue the source vertex i
+        queue[rear++] = i;
 
-    /* Floyd–Warshall algorithm to compute shortest paths */
-    for (k = 1; k <= n; k++) {
-        for (i = 1; i <= n; i++) {
+        // Perform BFS starting from vertex i
+        while (front < rear) {
+            int u = queue[front++];  // Dequeue the next vertex
+            // Iterate over all vertices j to check if there's an edge from u
             for (j = 1; j <= n; j++) {
-                if (dist[i][j] > dist[i][k] + dist[k][j])
-                    dist[i][j] = dist[i][k] + dist[k][j];
+                // If there's an edge from u to j and vertex j has not been visited (dist[j] == -1)
+                if (g[u][j] != 0 && dist[j] == -1) {
+                    // Set the distance to j as one more than the distance to u
+                    dist[j] = dist[u] + 1;
+                    // Enqueue vertex j for further exploration
+                    queue[rear++] = j;
+                }
             }
         }
-    }
+        free(queue);
 
-    /* Sum the distances for i < j */
-    double sum = 0.0;
-    int countPairs = 0;
-    for (i = 1; i <= n; i++) {
+        // For avoiding double counting in an undirected graph, sum only distances for j > i
         for (j = i + 1; j <= n; j++) {
-            sum += dist[i][j];
-            countPairs++;
+            totalDistance += dist[j];
+            totalPairs++;
         }
+        free(dist);
     }
-
-    /* Free allocated memory */
-    for (i = 0; i <= n; i++)
-        free(dist[i]);
-    free(dist);
-
-    return sum / countPairs;
+    if (totalPairs == 0) return 0.0;
+    return ((double) totalDistance) / totalPairs;
 }
 
 void store_best_graph(void) {

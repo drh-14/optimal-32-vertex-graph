@@ -118,8 +118,6 @@ static void nachblist()
  fprintf(autfile,"\n");
 }
 
-
-
 // Using BFS (O(n^2) average-case 
 double compute_aspl(void) {
     int i, j;
